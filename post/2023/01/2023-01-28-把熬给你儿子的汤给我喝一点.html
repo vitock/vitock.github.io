@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>把熬给你儿子的汤给我喝一点</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/main.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content">
+      
+      <div class="w">
+<h1> <a href="/"> L 记事本 </a></h1>
+<nav>
+    <ul class="navul">
+        <li class="navli"><a href="/" class="curNav">文章</a></li>
+        <li class="navli"><a href="/archive.html" class="nav">归档</a></li>
+        <li class="navli"><a href="/tags.html" class="nav">标签</a></li>
+        <li class="navli"><a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+<h2>把熬给你儿子的汤给我喝一点</h2><time datetime="2023-01-28 10:49:57 +0800">2023/01/28</time> &nbsp; &nbsp;<a href="/tags/流水账.html" class="tag"><text><nobr>#流水账</nobr></text>&nbsp;</a><a href="/tags/日常.html" class="tag"><text><nobr>#日常</nobr></text>&nbsp;</a><a href="/tags/秘.html" class="tag"><text><nobr>#秘</nobr></text>&nbsp;</a><article>
+<div id="encrypted">
+    <h3> 文章内容已经被加密:) </h3>
+   
+    <input style="width:100%; " type="password" id="passwordinput" placeholder="输入密码"></input>
+    <p>
+        <input type="button" value= "解密" id="DecryptBtn"/>
+        <input type="button" value= "清空密码缓存" id="ClearBtn1"/>
+    
+    </div>
+    
+    <div id="decrypted"  style = "display:none">
+        <p>
+        <div>
+           
+            <input type="button" value= "重新加密" id="EncryptBtn"/>
+
+            <input type="button" value= "清空密码缓存" id="ClearBtn2"/>
+           
+        </div>
+        <div id = 'decryptContent'>
+        </div>
+    </div>
+    <script>
+        var exports = exports || {} 
+    </script>
+    <script src="//cdn.jsdelivr.net/gh/vitock/jsdelivr@0.1.2/js/base64js.js"></script>
+    <script>
+        !function(){
+
+            const substl = crypto.subtle
+            const preFix = '1014d63b3a2022013563f032cdf6bba2c';
+            const encid = preFix
+            const encryptedContent = 'E1.5kpmOEsbloeyS4sSORrN/vbCKNOevP6Vf6X46jCBXcswaf3zqaBlV7nb1Xvho0LtxCuLoTKxRVoZ70CY8mepUpLkdcHwEByeX95x1V+SKkdnJ5RM0MSsw7buoGpdDuaZcVyl4zR1gyZRtGKKCJwu277kRzFkUmDONl9nQi13uHw+8FtO0/IjDSUyCp9A+re9sg+jv3qk+frvfTls+XhEdk9LpR/KMUBiMVk+ZlnL4nykbKjh0E7IuNfEailZw0nrQ8kFpQpMCw4PHc2nMMNOxsaZ5HeEWRhYRNwu32olfY7DF4EmzmTbs3jpRei8eHXVtod0Ujkscj2aQO5McLpQY78d1pQm6NBUfFVcMArlKKuAyivUSkoaP+Hz3esmqXsMutj97m2jcFsym89lk3WRK9XaLi6bSd1Cdehaa30qKaCa1PYU6szKl93H6ndwN8aDJJqiG/yRh+JdRgswiJsl7TC8UIq9NGdbGbkj1BVyVWIAvHLJWsHMl/xrOxiXmlDHFZr4wkOYEQpjD6ntW0LNnxwlcsg5nyP/4w0VDWtvBTdNIRPg72K9IL5sF6923JgY8+H2fpXeBZiroruGM77/l3nNMpeQ6sGyW46G8XAl5lClTWdQ3jmOb+S68mzZWSzj/HoWv73MBW6YZbQl6UJXd1EQH0DhZSbX3RhXYHCOowiKB7Y966+W9S3SECHyDv0yzkTC+vv0HSY/m7lO5zNx9B2TyQIw71uoRL1C5frWMOiXPIXH4CXHj38/JCZNZe5pB6NPjqJOZ9H0wpPqrwtNaQ/1RighQhWUx7CGYuVJi1NkNN/OAj4RegwPh+dHaXpFOfnpYm7XXyqJXPGDtRAVTQTqjZlqlRgoxLCGi91spHWCVDmHIdSbAq5sI3iS2tvddebceJQCcGB729+XcfND78f5nUS0URqAE8VP9ahlLafg0dz7tD9FuTiTCNT8TsOUWC366K0BxR5X9Uu/MuBfPqg+ruLX+XKSdxBlop3KsJIaNzya8/t7/RIgHis6GNHe9wx6asPK'
+            const base64str = encryptedContent.substring(3)
+            const bfMsg = base64js.decode(base64str)
+            const bfIv = bfMsg.subarray(0,12)
+            const bfCipher = bfMsg.subarray(12)
+            
+            async function genKey(psw){
+                var keyRaw = new TextEncoder().encode(psw)
+                var key = await substl.importKey('raw',keyRaw,'PBKDF2',false,["deriveBits"])
+                const salt = 'this is a salt string 20221019'
+                let pbkdf2  = {
+                    name:"PBKDF2",hash: "SHA-256",iterations: 12345,salt: new TextEncoder().encode(salt)
+                }
+                return  await substl.deriveBits(pbkdf2,key,256);
+            }
+
+
+ 
+        async function decrypt (key0,isCached){
+            // const key = Uint8Array([...]); // 32 bytes key
+            
+            var key  = ''
+            if(isCached){
+                key = readKey()
+            }
+            else{
+                var keyS = preFix + key0 +  preFix
+                key = await genKey(keyS)
+            }
+            if (key.length == 0) {
+                return
+            }
+
+            var aeskey = {
+                name:"AES-GCM",
+                length:256
+            }
+            var keyObj = await substl.importKey('raw',key,aeskey,false,['decrypt'])
+            var aesDec= {name: "AES-GCM",iv:bfIv,tagLength:128}
+            try {
+                var bfDec  = await substl.decrypt(aesDec,keyObj,bfCipher)
+                var plain = new TextDecoder().decode(bfDec);
+                setKey(key)
+                document.getElementById("encrypted").style.display = 'none'
+                // / show decrypted 
+    
+                document.getElementById("decrypted").style.display = 'block'
+                document.getElementById("decryptContent").innerHTML = plain
+    
+                setTimeout(function(){
+                    var loadevent = document.createEvent("Event")
+                    loadevent.initEvent("load", true, true)
+    
+                    var DOMContentLoaded_event = document.createEvent("Event")
+                    DOMContentLoaded_event.initEvent("DOMContentLoaded", true, true)
+    
+                    window.dispatchEvent(loadevent)
+                    window.dispatchEvent(DOMContentLoaded_event)
+    
+                }, 500);
+            } catch (error) {
+                alert("wrong password.")
+            }
+        }
+        
+        document.getElementById("DecryptBtn").onclick = function(){
+            var key = document.getElementById("passwordinput").value
+            decrypt(key);        
+        }
+    
+        document.getElementById("EncryptBtn").onclick = function(){
+            /// hide input
+            document.getElementById("encrypted").style.display = 'block'
+            // / show decrypted 
+            document.getElementById("decrypted").style.display = "none"
+    
+            clearKey()
+        }
+
+        document.getElementById("EncryptBtn").onclick = function(){
+            /// hide input
+            document.getElementById("encrypted").style.display = 'block'
+            // / show decrypted 
+            document.getElementById("decrypted").style.display = "none"
+    
+            clearKey()
+        }
+
+        document.getElementById("ClearBtn1").onclick = function(){
+            localStorage.clear();
+        }
+        document.getElementById("ClearBtn2").onclick = function(){
+            localStorage.clear();
+        }
+            function readKey(){
+                var key = encid;
+                var v = localStorage.getItem(key)
+                if (v) {
+                    return base64js.decode(v)
+                }else{
+                    return null
+                }
+            }
+            function setKey(value){
+                var key = encid
+                var arr = new Uint8Array(value)
+                var b64 = base64js.encode(arr)
+                return localStorage.setItem(key,b64)
+            }
+            function clearKey() {
+                var key = encid
+                localStorage.removeItem(key)
+            }
+            var cachekey = readKey()
+            if(cachekey){
+                decrypt(cachekey,true)
+            }
+    }()
+    
+    </script>
+    </article>
+<footer class="footer">
+          <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+         </p>
+        </footer></div>
+    </main></body>
+</html>
