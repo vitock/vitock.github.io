@@ -1,0 +1,11 @@
+#! /usr/bin/env bash
+
+key=$(cat ~/Documents/.blogconfig/privatekey.enc |  openssl enc -d -aes-256-ecb -pass env:JEKYLL_BLOG_KEY)
+
+
+ltectool g $key
+export JEKYLL_EC_PRIVATEKEY=$key
+export JEKYLL_ENV=production
+rm -rf tags
+bundle exec jekyll clean
+bundle exec jekyll build
