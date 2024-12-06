@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>拼一个高低床</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>拼一个高低床</h2><time datetime="2021-05-31 17:27:20 +0800">2021/05/31 Mon</time> &nbsp; &nbsp;<a href="/tags/秘.html" class="tag"><text><nobr>#秘</nobr></text>&nbsp;</a><article>
+<div id="encrypted">
+    <h3> 🔒 文章内容已经被加密:) </h3>
+   
+    <input style="width:100%; " type="password" id="passwordinput" placeholder="输入密码"></input>
+    <p>
+        <input type="button" value= "解密" id="DecryptBtn"/>
+        <input type="button" value= "清空密码缓存" id="ClearBtn1"/>
+    
+    </div>
+    
+    <div id="decrypted"  style = "display:none">
+        <p>
+        <div>
+           
+            <input type="button" value= "重新加密" id="EncryptBtn"/>
+
+            <input type="button" value= "清空密码缓存" id="ClearBtn2"/>
+           
+        </div>
+        <div id = 'decryptContent'>
+        </div>
+    </div>
+    <script>
+        var exports = exports || {} 
+    </script>
+    <script src="//cdn.jsdelivr.net/gh/vitock/jsdelivr@0.1.2/js/base64js.js"></script>
+    <script>
+        !function(){
+
+            const substl = crypto.subtle
+            const preFix = '1014d63b3a2022013563f032cdf6bba2c';
+            const encid = preFix
+            const encryptedContent = 'E1.aONaqQRrhE0jeOBYyDgu5Z2g+CO2QE/atywBTXuPgXPoBPCK2JWEI29VZYNLncMhABCG3p2/Fk/q8Aq3xKjQH+/VBH7Vmpp6q3ABaPDX6rM0vkes+CxTGgdMtMVp6irJGTspAKfJ19XZ6/qvoKf3Y1kzvLmtLs3/W0O/RcbRzH8v5DjEfxk4uq9ZC3JllHJwC4q+TkT+T4MQB5eQGrp8RiDzNVQQXJwj/hWlNhUMkjH83I0xZPJM2QQS3srqW5uG4l2cMo4MnUowrJYAT6xLQDy9V1nzGjf7VuStIL0zweKG2RZtIuCVC57yBHax8p2KeKlRHDvH+5rI78HgledYDz7KFH2sPycb+aOO1pp8WGogXl5yMhIC2ZPvTR9Uv80W0+vUs82CVoRt/A4cSDQ6Hr2DdEEnovfrLJ6ox64mh5E7clIZ8j9sUhvjPERLEsdE0g/mnuibGCjddRuAYbwX3gJ6TObwkcyipCVRCT/KhXrtzwlkPncp9YmR9tunCVVXsRbf7h1BjFLhCGPvUXJcOuZCEB2fOxWwPBEjulExpA/RnuLYmSFINu/C3DCoM4TDlRmHwPpuDnpn6xOVZ6nFHA798q5N1zcrBPZZA+IN8M+yOzvZOUDRZlU6D4QjGAW1JgXduiXI5HPJzZxfnCVGyBUlPXQNIZwKjsIQI/9I6vOZTeIX++QKZddr4+tFjal8p8wLgeSO/owyJQY0pnNmiTVRZuKKPwwrSiKDs9T24Q1uWZToKziu1FHO6/ioeV1dWClDHowizpuZrExYBWFmJ9grgxozSiFGAHSmAIvrS76/inIAxbcLpMIoxRlSdJvmYrcpQNjM8tLXoYErinOax7p2lNCnVlxnru4zSa9x5Txw/VtesEp1/jbR8HkaLYSqdkLaE4yrbr5jwHJyZyWWBVRsG3eVpVx8FHkCAiHasmj8ZfJsLfy0wcctLPrKxPyjZRM0D84/dcCcORNVHnNTYWPAzVzHeAt6lG5ydDX1MAftSpiduqmolFSu9ZIyF+9FDUgZCEHvaJJuqT6gl2ffueO/HieHjmcIONPdaPNG1FHS5OVvKT/kdMSv47D8B3/eJ7CopeOaDzSRb7fQmdBiB24B8VMBObmuzCsB2M9OHUloi13uiK+OdDynpe/4rRIJCJJ4AVeVbjAKPDqO7++KPXpfxHrVecadXYh8ZQDWL790D2I6eywLNpEKiKW16lYR2O5Hykk4zJgKWMLA9MOeB/K/gdAwc7iOFO3KYn27yg9+c1uHYzvbOy884J/Rsqa71vkLdjL9gUiFsjrf/FrEJJmdYCOTjLqKnskgbszir3b1+1Fe6eoK/s1bMnvz9Ze1aZaVO52y/ykWPe73FizBzWxybXGLpY53cj9PDZ8WFtoRsaDRgUFCbevhuM9i+KDrHhiQOa8gitTRBPJ0xwENI7nnt/PaEbv82VxbKVYgut5ZwFEbeEq/2JgqZ8BccAOePAANombuc0sSq7/yDWi3FD0KZqpMfoyCZ1eV3L43Fgh3hCc0Q4EUuwYrIFJ3QEf6pJxLmxCQ3WRdh5j5aFWaXL/4lC5l+PaL'
+            const base64str = encryptedContent.substring(3)
+            const bfMsg = base64js.decode(base64str)
+            const bfIv = bfMsg.subarray(0,12)
+            const bfCipher = bfMsg.subarray(12)
+            
+            async function genKey(psw){
+                var keyRaw = new TextEncoder().encode(psw)
+                var key = await substl.importKey('raw',keyRaw,'PBKDF2',false,["deriveBits"])
+                const salt = 'this is a salt string 20221019'
+                let pbkdf2  = {
+                    name:"PBKDF2",hash: "SHA-256",iterations: 12345,salt: new TextEncoder().encode(salt)
+                }
+                return  await substl.deriveBits(pbkdf2,key,256);
+            }
+
+
+ 
+        async function decrypt (key0,isCached){
+            // const key = Uint8Array([...]); // 32 bytes key
+            
+            var key  = ''
+            if(isCached){
+                key = readKey()
+            }
+            else{
+                var keyS = preFix + key0 +  preFix
+                key = await genKey(keyS)
+            }
+            if (key.length == 0) {
+                return
+            }
+
+            var aeskey = {
+                name:"AES-GCM",
+                length:256
+            }
+            var keyObj = await substl.importKey('raw',key,aeskey,false,['decrypt'])
+            var aesDec= {name: "AES-GCM",iv:bfIv,tagLength:128}
+            try {
+                var bfDec  = await substl.decrypt(aesDec,keyObj,bfCipher)
+                var plain = new TextDecoder().decode(bfDec);
+                setKey(key)
+                document.getElementById("encrypted").style.display = 'none'
+                // / show decrypted 
+    
+                document.getElementById("decrypted").style.display = 'block'
+                document.getElementById("decryptContent").innerHTML = plain
+    
+                setTimeout(function(){
+                    var loadevent = document.createEvent("Event")
+                    loadevent.initEvent("load", true, true)
+    
+                    var DOMContentLoaded_event = document.createEvent("Event")
+                    DOMContentLoaded_event.initEvent("DOMContentLoaded", true, true)
+    
+                    window.dispatchEvent(loadevent)
+                    window.dispatchEvent(DOMContentLoaded_event)
+    
+                }, 500);
+            } catch (error) {
+                alert("wrong password.")
+            }
+        }
+        
+        document.getElementById("DecryptBtn").onclick = function(){
+            var key = document.getElementById("passwordinput").value
+            decrypt(key);        
+        }
+    
+        document.getElementById("EncryptBtn").onclick = function(){
+            /// hide input
+            document.getElementById("encrypted").style.display = 'block'
+            // / show decrypted 
+            document.getElementById("decrypted").style.display = "none"
+    
+            clearKey()
+        }
+
+        document.getElementById("EncryptBtn").onclick = function(){
+            /// hide input
+            document.getElementById("encrypted").style.display = 'block'
+            // / show decrypted 
+            document.getElementById("decrypted").style.display = "none"
+    
+            clearKey()
+        }
+
+        document.getElementById("ClearBtn1").onclick = function(){
+            localStorage.clear();
+        }
+        document.getElementById("ClearBtn2").onclick = function(){
+            localStorage.clear();
+        }
+            function readKey(){
+                var key = encid;
+                var v = localStorage.getItem(key)
+                if (v) {
+                    return base64js.decode(v)
+                }else{
+                    return null
+                }
+            }
+            function setKey(value){
+                var key = encid
+                var arr = new Uint8Array(value)
+                var b64 = base64js.encode(arr)
+                return localStorage.setItem(key,b64)
+            }
+            function clearKey() {
+                var key = encid
+                localStorage.removeItem(key)
+            }
+            var cachekey = readKey()
+            if(cachekey){
+                decrypt(cachekey,true)
+            }
+    }()
+    
+    </script>
+    </article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>
