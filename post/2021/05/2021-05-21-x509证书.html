@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>x509证书</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>x509证书</h2><time datetime="2021-05-22 00:09:26 +0800">2021/05/22 Sat</time> &nbsp; &nbsp;<a href="/tags/开发.html" class="tag"><text><nobr>#开发</nobr></text>&nbsp;</a><a href="/tags/证书格式.html" class="tag"><text><nobr>#证书格式</nobr></text>&nbsp;</a><a href="/tags/ASN.1.html" class="tag"><text><nobr>#ASN.1</nobr></text>&nbsp;</a><article><blockquote>
+  <p>原文 <a href="https://github.com/ZhenlyChen/X.509Reader/blob/master/docs/Design.md">ZhenlyChen/X.509Reader</a></p>
+  <h1 id="x509-证书解析">X.509 证书解析</h1>
+</blockquote>
+
+<h2 id="x509-证书结构描述">X.509 证书结构描述</h2>
+
+<p>X.509证书有多种常用的文件扩展名，代表着不同形式的数据编码以及内容</p>
+
+<p>其中常见的有（来自Wikipedia）：</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">.pem</code> – <a href="https://zh.wikipedia.org/w/index.php?title=DER&amp;action=edit&amp;redlink=1">DER</a>编码的证书再进行<a href="https://zh.wikipedia.org/wiki/Base64">Base64</a>编码的数据</li>
+  <li><code class="language-plaintext highlighter-rouge">.cer</code>, <code class="language-plaintext highlighter-rouge">.crt</code>, <code class="language-plaintext highlighter-rouge">.der</code> – 通常是<a href="https://zh.wikipedia.org/w/index.php?title=DER&amp;action=edit&amp;redlink=1">DER</a>二进制格式的，但Base64编码后也很常见。</li>
+  <li><code class="language-plaintext highlighter-rouge">.p7b</code>, <code class="language-plaintext highlighter-rouge">.p7c</code> – <a href="https://zh.wikipedia.org/wiki/%E5%85%AC%E9%92%A5%E5%AF%86%E7%A0%81%E5%AD%A6%E6%A0%87%E5%87%86">PKCS#7</a> SignedData structure without data, just certificate(s) or <a href="https://zh.wikipedia.org/wiki/%E8%AF%81%E4%B9%A6%E5%90%8A%E9%94%80%E5%88%97%E8%A1%A8">CRL</a>(s)</li>
+  <li><code class="language-plaintext highlighter-rouge">.p12</code> – <a href="https://zh.wikipedia.org/wiki/%E5%85%AC%E9%92%A5%E5%AF%86%E7%A0%81%E5%AD%A6%E6%A0%87%E5%87%86">PKCS#12</a>格式，包含证书的同时可能还有带密码保护的私钥</li>
+  <li><code class="language-plaintext highlighter-rouge">.pfx</code> – PFX，PKCS#12之前的格式（通常用PKCS#12格式，比如那些由<a href="https://zh.wikipedia.org/wiki/IIS">IIS</a>产生的PFX文件）</li>
+</ul>
+
+<p>这里我主要解析的是<code class="language-plaintext highlighter-rouge">DER</code>二进制格式经过Base64编码后的数据</p>
+
+<p>其中证书的组成结构标准用<code class="language-plaintext highlighter-rouge">ASN.1</code>来进行描述，有着不同的版本，其中<code class="language-plaintext highlighter-rouge">V3</code>版本的基本结构如下（Wikipedia）：</p>
+
+<ul>
+  <li>证书
+    <ul>
+      <li>版本号：标识证书的版本（版本1、版本2或是版本3）</li>
+      <li>序列号：标识证书的唯一整数，由证书颁发者分配的本证书的唯一标识符</li>
+      <li>签名算法：用于签证书的算法标识，由对象标识符加上相关的参数组成，用于说明本证书所用的数字签名算法</li>
+      <li>颁发者：证书颁发者的可识别名（DN）</li>
+      <li>证书有效期 ：此日期前无效 - 此日期后无效</li>
+      <li>主体：证书拥有者的可识别名</li>
+      <li>主体公钥信息
+        <ul>
+          <li>公钥算法</li>
+          <li>主体公钥</li>
+        </ul>
+      </li>
+      <li>颁发者唯一身份信息（可选项）</li>
+      <li>主体唯一身份信息（可选项）</li>
+      <li>扩展信息（可选项）
+        <ul>
+          <li>发行者密钥标识符：证书所含密钥的唯一标识符，用来区分同一证书拥有者的多对密钥</li>
+          <li>密钥使用：指明（限定）证书的公钥可以完成的功能或服务，如：证书签名、数据加密等</li>
+          <li>CRL分布点</li>
+          <li>私钥的使用期</li>
+          <li>证书策略：由对象标识符和限定符组成，这些对象标识符说明证书的颁发和使用策略有关</li>
+          <li>策略映射</li>
+          <li>主体别名：指出证书拥有者的别名，如电子邮件地址、IP地址等</li>
+          <li>颁发者别名：指出证书颁发者的别名</li>
+          <li>主体目录属性：证书拥有者的一系列属性</li>
+        </ul>
+      </li>
+      <li>证书签名算法</li>
+      <li>数字签名</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="数据结构">数据结构</h2>
+
+<h3 id="base64">Base64</h3>
+
+<p>为了在互联网上传输，大多数证书都是采用Base64编码，以可打印字符的形式表示二进制数据流。</p>
+
+<p>Base64编码由RFC 1421和RFC 2045定义，一共有64个可打印字符，因此每六个比特表示为一个单元，以64种字符表示二进制数据。</p>
+
+<h4 id="解码">解码</h4>
+
+<p>首先取出一组（4个字符），按照其值在<code class="language-plaintext highlighter-rouge">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/</code>中位置获得其代表的值，然后依次从高位到低位放入一个24位的缓冲区中，最后将其划分为三个八位的字符。</p>
+
+<p>下面是维基百科上一个简单的例子</p>
+
+<p><img src="Design/1544786276143.png" alt="1544786276143" /></p>
+
+<p>在C++中，只需要一个简单的循环，每次以原数据的4个单元为一组，将其转换成3个八位的数据。</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">byte</span> <span class="n">text</span><span class="p">[</span><span class="n">len</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+<span class="kt">int</span> <span class="n">textIndex</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">data</span><span class="p">.</span><span class="n">length</span><span class="p">();</span> <span class="n">i</span> <span class="o">+=</span> <span class="mi">4</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">byte</span> <span class="n">base64_bit_6</span><span class="p">[</span><span class="mi">4</span><span class="p">];</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">base64_bit_6</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">base64_chars</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="p">]);</span>
+  <span class="p">}</span>
+  <span class="n">text</span><span class="p">[</span><span class="n">textIndex</span><span class="p">]</span> <span class="o">=</span>
+    <span class="p">((</span><span class="n">base64_bit_6</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x3f</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="o">|</span> <span class="p">((</span><span class="n">base64_bit_6</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x30</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">4</span><span class="p">);</span>
+  <span class="n">text</span><span class="p">[</span><span class="n">textIndex</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span>
+    <span class="p">((</span><span class="n">base64_bit_6</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0xf</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">4</span><span class="p">)</span> <span class="o">|</span> <span class="p">((</span><span class="n">base64_bit_6</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x3c</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">2</span><span class="p">);</span>
+  <span class="n">text</span><span class="p">[</span><span class="n">textIndex</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span>
+    <span class="p">((</span><span class="n">base64_bit_6</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x3</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">6</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">base64_bit_6</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x3f</span><span class="p">);</span>
+  <span class="n">textIndex</span> <span class="o">+=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="ans1">ANS.1</h3>
+
+<p>经过Base64解码后，就是证书中的内容了，按照标准，这一部分的内容使用<code class="language-plaintext highlighter-rouge">ANS.1</code>表示。</p>
+
+<p>ANS.1是一套描述数据表示、编码、传输、解码的灵活的记法，是一套正式、无歧义和精确的规则。我们可以使用ANS.1描述独立于计算机硬件的对象结构。</p>
+
+<p>对于X.509证书标准，存在以下的结构：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Certificate  ::=  SEQUENCE  {
+  tbsCertificate       TBSCertificate,
+  signatureAlgorithm   AlgorithmIdentifier,
+  signatureValue       BIT STRING  }
+
+TBSCertificate  ::=  SEQUENCE  {
+  version         [0]  EXPLICIT Version DEFAULT v1,
+  serialNumber         CertificateSerialNumber,
+  signature            AlgorithmIdentifier,
+  issuer               Name,
+  validity             Validity,
+  subject              Name,
+  subjectPublicKeyInfo SubjectPublicKeyInfo,
+  issuerUniqueID  [1]  IMPLICIT UniqueIdentifier OPTIONAL,
+                        -- If present, version MUST be v2 or v3
+  subjectUniqueID [2]  IMPLICIT UniqueIdentifier OPTIONAL,
+                        -- If present, version MUST be v2 or v3
+  extensions      [3]  EXPLICIT Extensions OPTIONAL
+                        -- If present, version MUST be v3}
+
+Version  ::=  INTEGER  {  v1(0), v2(1), v3(2)  }
+
+CertificateSerialNumber  ::=  INTEGER
+
+Validity ::= SEQUENCE {
+  notBefore      Time,
+  notAfter       Time }
+
+Time ::= CHOICE {
+  utcTime        UTCTime,
+  generalTime    GeneralizedTime }
+
+UniqueIdentifier  ::=  BIT STRING
+
+SubjectPublicKeyInfo  ::=  SEQUENCE  {
+  algorithm            AlgorithmIdentifier,
+  subjectPublicKey     BIT STRING  }
+
+Extensions  ::=  SEQUENCE SIZE (1..MAX) OF Extension
+
+Extension  ::=  SEQUENCE  {
+  extnID      OBJECT IDENTIFIER,
+  critical    BOOLEAN DEFAULT FALSE,
+  extnValue   OCTET STRING
+              -- contains the DER encoding of an ASN.1 value
+              -- corresponding to the extension type identified
+              -- by extnID
+              }
+</code></pre></div></div>
+
+<h3 id="der">DER</h3>
+
+<p>证书中的ANS.1数据是以DER编码而来的。</p>
+
+<p>具体的文档可以查看http://luca.ntop.org/Teaching/Appunti/asn1.html</p>
+
+<p>DER为ANS.1类型定义了一种唯一的编码方案。</p>
+
+<p>对于每一种数据类型，其DER编码由以下四部分组成：</p>
+
+<ul>
+  <li>类型字段：tag(T)</li>
+  <li>长度字段：length(L)</li>
+  <li>值字段：value(V)</li>
+  <li>结束表示字段</li>
+</ul>
+
+<h4 id="类型字段">类型字段</h4>
+
+<p>类型由一个字节（8位）大小的数据表示</p>
+
+<p>其中高两位(8-7)表示了TAG的类型：</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">00</code>: universal</li>
+  <li><code class="language-plaintext highlighter-rouge">01</code>: application</li>
+  <li><code class="language-plaintext highlighter-rouge">10</code>: context-specific</li>
+  <li><code class="language-plaintext highlighter-rouge">11</code>: private</li>
+</ul>
+
+<p>第六位表示是否位结构化类型：</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">0</code>: 简单类型</li>
+  <li><code class="language-plaintext highlighter-rouge">1</code>：结构类型</li>
+</ul>
+
+<p>剩余的五位(5-1)就是表示具体的类型</p>
+
+<p>比较常用的类型有</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Tag number (decimal)</th>
+      <th>Tag number (hexadecimal)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">INTEGER</code></td>
+      <td>2</td>
+      <td><code class="language-plaintext highlighter-rouge">02</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">BIT STRING</code></td>
+      <td>3</td>
+      <td><code class="language-plaintext highlighter-rouge">03</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">OCTET STRING</code></td>
+      <td>4</td>
+      <td><code class="language-plaintext highlighter-rouge">04</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">NULL</code></td>
+      <td>5</td>
+      <td><code class="language-plaintext highlighter-rouge">05</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">OBJECT IDENTIFIER</code></td>
+      <td>6</td>
+      <td><code class="language-plaintext highlighter-rouge">06</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">SEQUENCE</code> and <code class="language-plaintext highlighter-rouge">SEQUENCE OF</code></td>
+      <td>16</td>
+      <td><code class="language-plaintext highlighter-rouge">10</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">SET</code> and <code class="language-plaintext highlighter-rouge">SET OF</code></td>
+      <td>17</td>
+      <td><code class="language-plaintext highlighter-rouge">11</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">PrintableString</code></td>
+      <td>19</td>
+      <td><code class="language-plaintext highlighter-rouge">13</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">T61String</code></td>
+      <td>20</td>
+      <td><code class="language-plaintext highlighter-rouge">14</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">IA5String</code></td>
+      <td>22</td>
+      <td><code class="language-plaintext highlighter-rouge">16</code></td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">UTCTime</code></td>
+      <td>23</td>
+      <td><code class="language-plaintext highlighter-rouge">17</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h4 id="长度字段">长度字段</h4>
+
+<p>长度字段，有两种编码格式。</p>
+
+<p>若长度值小于等于127，则用一个字节表示，bit8 = 0, bit7-bit1 存放长度值</p>
+
+<p>若长度值大于127，则用多个字节表示，可以有2到127个字节。第一个字节的第8位为1，其它低7位给出后面该域使用的字节的数量，从该域第二个字节开始给出数据的长度，高位优先。</p>
+
+<p>还有一种特殊情况，这个字节为<code class="language-plaintext highlighter-rouge">0x80</code>，表示数据块长度不定，由数据块结束标识结束数据块。</p>
+
+<h4 id="值字段">值字段</h4>
+
+<p>根据不同类型，值字段可以表示不同的数据，如Ascii字符、16进制字符串、OID</p>
+
+<h3 id="object-id">Object ID</h3>
+
+<p>在证书中的各种值中，比较常见的就是<code class="language-plaintext highlighter-rouge">Object ID</code>(对象标识符)</p>
+
+<p>对象标识符是由国际电信联盟(ITU)和ISO/IEC标准化的标识符机制，用于表示对一个对象、概念或者事务的全球化的一种标识。</p>
+
+<p>OID是由一连串以点<code class="language-plaintext highlighter-rouge">.</code>分隔的数字组成，</p>
+
+<p>比如：<code class="language-plaintext highlighter-rouge">1.3.6.1.4.1.343</code></p>
+
+<p>表示的是</p>
+
+<ul>
+  <li>1： ISO assigned OIDs（ISO指定的OID）</li>
+  <li>1.3 ： ISO Identified Organization （ISO认证组织）</li>
+  <li>1.3.6： US Department of Defense （美国国防部）</li>
+  <li>1.3.6.1 ：Internet （因特网）</li>
+  <li>1.3.6.1.4： Internet Private （互联网专用）</li>
+  <li>1.3.6.1.4.1 ：IANA-registered Private Enterprises （私营企业）</li>
+  <li>1.3.6.1.4.1.343 ：Intel Corporation （英特尔公司）</li>
+</ul>
+
+<p>不同的OID表示的信息可以在网上查到 https://www.alvestrand.no/objectid/1.3.6.1.4.1.343.html</p>
+
+<p>在X.509证书里面，证书颁发者的地区、国家就是使用OID来表示的</p>
+
+<h4 id="转换">转换</h4>
+
+<p>那么我们如何将二进制数据转换成OID标识呢？</p>
+
+<p>在X.509的值的二进制数据中，一个OID表示的值如下</p>
+
+<p><code class="language-plaintext highlighter-rouge">00101010 10000110 01001000 10000110 11110111 00001101 00000001 00000001 00001011</code></p>
+
+<p>将其分为8位大小的块，每一块的第一位表示是否为结束块</p>
+
+<p>如果是1就和后面的连在一起</p>
+
+<p>如果是0就是一个独立的块</p>
+
+<p>得到以下的7bit的6个块</p>
+
+<p><code class="language-plaintext highlighter-rouge">0101010 00001101001000 000011011101110001101 0000001 0000001 0001011</code></p>
+
+<p>然后化为10进制</p>
+
+<p><code class="language-plaintext highlighter-rouge">42 840 113549 1 1 11</code></p>
+
+<p>对第一位<code class="language-plaintext highlighter-rouge">X</code>进行特殊处理，使其变为两个位</p>
+
+<ul>
+  <li>第一位：<code class="language-plaintext highlighter-rouge">min([X/40], 2)</code></li>
+  <li>第二位： <code class="language-plaintext highlighter-rouge">X - 40 * 第一位 </code></li>
+</ul>
+
+<p>因此<code class="language-plaintext highlighter-rouge">42 = 40 * 1 + 2</code>，可以分解为1和2，然后得到以下的OID</p>
+
+<p><code class="language-plaintext highlighter-rouge">1.2.840.113549.1.1.11</code></p>
+
+<p>在网上查找数据库，得出以下数据</p>
+
+<p><a href="https://www.alvestrand.no/objectid/1.2.840.113549.1.1.11.html">1.2.840.113549.1.1.11</a> - sha256WithRSAEncryption</p>
+
+<ul>
+  <li><a href="https://www.alvestrand.no/objectid/1.2.840.113549.1.1.html">1.2.840.113549.1.1</a> - PKCS-1</li>
+  <li><a href="https://www.alvestrand.no/objectid/1.2.840.113549.1.html">1.2.840.113549.1</a> - PKCS</li>
+  <li><a href="https://www.alvestrand.no/objectid/1.2.840.113549.html">1.2.840.113549</a> - RSADSI</li>
+  <li><a href="https://www.alvestrand.no/objectid/1.2.840.html">1.2.840</a> - USA</li>
+  <li><a href="https://www.alvestrand.no/objectid/1.2.html">1.2</a> - ISO member body</li>
+  <li><a href="https://www.alvestrand.no/objectid/1.html">1</a> - ISO assigned OIDs</li>
+  <li><a href="https://www.alvestrand.no/objectid/top.html">Top of OID tree</a></li>
+</ul>
+
+<p>因此，这个标识符表示这个证书使用的加密算法为<code class="language-plaintext highlighter-rouge">sha256WithRSAEncryption</code></p>
+
+<p>在C++里面，只要了解其结构，就可以很简单将二进制数据转换成OID字符串</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">String</span> <span class="n">title</span> <span class="o">=</span> <span class="s">""</span><span class="p">;</span>
+<span class="n">oiFirst</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x7f</span><span class="p">;</span>
+<span class="n">oiIndex</span> <span class="o">=</span> <span class="n">min</span><span class="p">(</span><span class="n">oiFirst</span> <span class="o">/</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+<span class="n">title</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">to_string</span><span class="p">(</span><span class="n">min</span><span class="p">(</span><span class="n">oiFirst</span> <span class="o">/</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">2</span><span class="p">)));</span>
+<span class="n">title</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="s">"."</span><span class="p">);</span>
+<span class="n">title</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">to_string</span><span class="p">(</span><span class="n">oiFirst</span> <span class="o">-</span> <span class="mi">40</span> <span class="o">*</span> <span class="n">oiIndex</span><span class="p">));</span>
+<span class="n">title</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="s">"."</span><span class="p">);</span>
+<span class="n">oiIndex</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+<span class="n">oiFirst</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">;</span> <span class="n">t</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">oiFirst</span> <span class="o">&lt;&lt;=</span> <span class="mi">7</span><span class="p">;</span>
+  <span class="n">oiFirst</span> <span class="o">+=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">t</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x7f</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">t</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x80</span><span class="p">))</span> <span class="p">{</span>
+    <span class="n">title</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">to_string</span><span class="p">(</span><span class="n">oiFirst</span><span class="p">));</span>
+    <span class="n">title</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="s">"."</span><span class="p">);</span>
+    <span class="n">oiIndex</span><span class="o">++</span><span class="p">;</span>
+    <span class="n">oiFirst</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+<span class="c1">// title 为OID字符串</span>
+</code></pre></div></div>
+
+<h3 id="解析">解析</h3>
+
+<p>下面对我的网站<code class="language-plaintext highlighter-rouge">www.zhenly.cn</code>的证书数据逐一解析</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="mi">30</span> <span class="mi">82</span> <span class="mo">05</span> <span class="mi">93</span> <span class="c1">// SEQUENCE类型(30), 长度的长度2(82),长度1427(0593) Certificate::</span>
+
+<span class="mi">30</span> <span class="mi">82</span> <span class="mo">04</span> <span class="mi">7</span><span class="n">b</span> <span class="c1">// SEQUENCE类型(30),长度的长度2(82),长度1147(047b) tbsCertificate::</span>
+
+<span class="n">a0</span> <span class="mo">03</span>       <span class="c1">// 特殊内容-证书版本(a0),长度3(03) Version::</span>
+<span class="mo">02</span> <span class="mo">01</span>       <span class="c1">// 整数类型(02),长度1</span>
+<span class="mo">02</span>          <span class="c1">// 版本：3(02)</span>
+
+<span class="mo">02</span> <span class="mi">10</span>       <span class="c1">// 整数类型(02),长度16(10) serialNumber::</span>
+<span class="mi">08</span> <span class="n">ea</span> <span class="n">ef</span> <span class="n">ef</span> <span class="n">ac</span> <span class="n">a5</span> <span class="mi">62</span> <span class="n">e2</span> <span class="mi">98</span> <span class="mi">0</span><span class="n">e</span> <span class="mi">0</span><span class="n">c</span> <span class="mi">3</span><span class="n">b</span> <span class="mi">99</span> <span class="n">e6</span> <span class="n">a5</span> <span class="n">a6</span> 
+<span class="c1">//  序列号：08eaefefaca562e2980e0c3b99e6a5a6</span>
+
+<span class="mi">30</span> <span class="mi">0</span><span class="n">d</span>       <span class="c1">// SEQUENCE类型(30),长度13</span>
+<span class="mo">06</span> <span class="mi">09</span>       <span class="c1">// Object Identifier 类型(06)，长度9(09)</span>
+<span class="mi">2</span><span class="n">a</span> <span class="mi">86</span> <span class="mi">48</span> <span class="mi">86</span> <span class="n">f7</span> <span class="mi">0</span><span class="n">d</span> <span class="mo">01</span> <span class="mo">01</span> <span class="mi">0</span><span class="n">b</span> <span class="c1">// signature:: 签名算法</span>
+
+<span class="c1">// 00101010 10000110 01001000 10000110 11110111 00001101 00000001 00000001 00001011</span>
+<span class="c1">// 第一位表示是否为结束块，如果是1就和后面的连在一起，得到以下的7bit的9位东西</span>
+<span class="c1">// 0101010 00001101001000 000011011101110001101 0000001 0000001 0001011</span>
+<span class="c1">// 化为10进制</span>
+<span class="c1">// 42 840 113549 1 1 11</span>
+<span class="c1">// 对第一位特殊处理 42 = 40 * 1 + 2， 变成1 2（第一位 min([42/40], 2) 第二位 42 - 40 * 第一位 ）</span>
+<span class="c1">// 1 2 840 113549 1 1 11</span>
+<span class="c1">// {iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-1(1) rsaEncryption(11)}</span>
+<span class="c1">// https://www.alvestrand.no/objectid/1.2.840.113549.1.1.11.html</span>
+<span class="c1">// 1.2.840.113549.1.1.11 - sha256WithRSAEncryption</span>
+<span class="mo">05</span> <span class="mo">00</span>       <span class="c1">// Null(05) 长度0(0) 密钥参数</span>
+
+<span class="mi">30</span> <span class="mi">72</span>       <span class="c1">// SEQUENCE类型(30), 长度114(72)</span>
+
+<span class="mi">31</span> <span class="mi">0</span><span class="n">b</span>       <span class="c1">// SET类型(31) 无序数列, 长度11(b)</span>
+<span class="mi">30</span> <span class="mi">09</span>       <span class="c1">// SEQUENCE类型(30) 长度9(09)</span>
+<span class="mo">06</span> <span class="mo">03</span>       <span class="c1">// Object Identifier 类型(06)，长度3(03)</span>
+<span class="mi">55</span> <span class="mo">04</span> <span class="mo">06</span>    <span class="c1">// 2.5.4.6 - id-at-countryName</span>
+<span class="mi">13</span> <span class="mo">02</span>       <span class="c1">// Printable String类型(13) 长度2(02)</span>
+<span class="mi">43</span> <span class="mi">4</span><span class="n">e</span>       <span class="c1">// CN  C(43) N(4e) ASCII</span>
+
+<span class="mi">31</span> <span class="mi">25</span>       <span class="c1">// SET类型(31) 无序数列, 长度37(25)</span>
+<span class="mi">30</span> <span class="mi">23</span>       <span class="c1">// SEQUENCE类型(30), 长度35(23)</span>
+<span class="mo">06</span> <span class="mo">03</span>       <span class="c1">// Object Identifier 类型(06)，长度3(03)</span>
+<span class="mi">55</span> <span class="mo">04</span> <span class="mi">0</span><span class="n">a</span>    <span class="c1">// 2.5.4.10 - id-at-organizationName</span>
+<span class="mi">13</span> <span class="mi">1</span><span class="n">c</span>       <span class="c1">// Printable String类型(13) 长度28(1c)</span>
+<span class="mi">54</span> <span class="mi">72</span> <span class="mi">75</span> <span class="mi">73</span> <span class="mi">74</span> <span class="mi">41</span> <span class="mi">73</span> <span class="mi">69</span> <span class="mi">61</span> <span class="mi">20</span> <span class="mi">54</span> <span class="mi">65</span> <span class="mi">63</span> <span class="mi">68</span> <span class="mi">6</span><span class="n">e</span> <span class="mi">6</span><span class="n">f</span> <span class="mi">6</span><span class="n">c</span> <span class="mi">6</span><span class="n">f</span> <span class="mi">67</span> <span class="mi">69</span> <span class="mi">65</span> <span class="mi">73</span> <span class="mi">2</span><span class="n">c</span> <span class="mi">20</span> <span class="mi">49</span> <span class="mi">6</span><span class="n">e</span> <span class="mi">63</span> <span class="mi">2</span><span class="n">e</span> <span class="c1">// TrustAsia Technologies, Inc.</span>
+
+<span class="mi">31</span> <span class="mi">1</span><span class="n">d</span>       <span class="c1">// SET类型(31) 无序数列, 长度29(1d)</span>
+<span class="mi">30</span> <span class="mi">1</span><span class="n">b</span>       <span class="c1">// SEQUENCE类型(30), 长度27(1b)</span>
+<span class="mo">06</span> <span class="mo">03</span>       <span class="c1">// Object Identifier 类型(06)，长度3(03)</span>
+<span class="mi">55</span> <span class="mo">04</span> <span class="mi">0</span><span class="n">b</span>    <span class="c1">// 2.5.4.11 - id-at-organizationalUnitName</span>
+<span class="mi">13</span> <span class="mi">14</span>       <span class="c1">// Printable String类型(13) 长度20(14)</span>
+<span class="mi">44</span> <span class="mi">6</span><span class="n">f</span> <span class="mi">6</span><span class="n">d</span> <span class="mi">61</span> <span class="mi">69</span> <span class="mi">6</span><span class="n">e</span> <span class="mi">20</span> <span class="mi">56</span> <span class="mi">61</span> <span class="mi">6</span><span class="n">c</span> <span class="mi">69</span> <span class="mi">64</span> <span class="mi">61</span> <span class="mi">74</span> <span class="mi">65</span> <span class="mi">64</span> <span class="mi">20</span> <span class="mi">53</span> <span class="mi">53</span> <span class="mi">4</span><span class="n">c</span> <span class="c1">// Domain Validated SSL</span>
+
+<span class="mi">31</span> <span class="mi">1</span><span class="n">d</span>       <span class="c1">// SET类型(31) 无序数列, 长度29(1d)</span>
+<span class="mi">30</span> <span class="mi">1</span><span class="n">b</span>       <span class="c1">// SEQUENCE类型(30), 长度27(1b)</span>
+<span class="mo">06</span> <span class="mo">03</span>       <span class="c1">// Object Identifier 类型(06)，长度3(03)</span>
+<span class="mi">55</span> <span class="mo">04</span> <span class="mo">03</span>    <span class="c1">// 2.5.4.3 - id-at-commonName</span>
+<span class="mi">13</span> <span class="mi">14</span>       <span class="c1">// Printable String类型(13) 长度20(14)</span>
+<span class="mi">54</span> <span class="mi">72</span> <span class="mi">75</span> <span class="mi">73</span> <span class="mi">74</span> <span class="mi">41</span> <span class="mi">73</span> <span class="mi">69</span> <span class="mi">61</span> <span class="mi">20</span> <span class="mi">54</span> <span class="mi">4</span><span class="n">c</span> <span class="mi">53</span> <span class="mi">20</span> <span class="mi">52</span> <span class="mi">53</span> <span class="mi">41</span> <span class="mi">20</span> <span class="mi">43</span> <span class="mi">41</span> <span class="c1">// TrustAsia TLS RSA CA</span>
+
+<span class="mi">30</span> <span class="mi">1</span><span class="n">e</span>       <span class="c1">// SEQUENCE类型(30), 长度30(1e)</span>
+<span class="mi">17</span> <span class="mi">0</span><span class="n">d</span>       <span class="c1">// UTCTime类型(17), 长度13(0d)</span>
+<span class="mi">31</span> <span class="mi">38</span> <span class="mi">31</span> <span class="mi">30</span> <span class="mi">32</span> <span class="mi">37</span> <span class="mi">30</span> <span class="mi">30</span> <span class="mi">30</span> <span class="mi">30</span> <span class="mi">30</span> <span class="mi">30</span> <span class="mi">5</span><span class="n">a</span> <span class="c1">// 181027000000Z</span>
+
+<span class="mi">17</span> <span class="mi">0</span><span class="n">d</span>       <span class="c1">// UTCTime类型(17), 长度13(0d)</span>
+<span class="mi">32</span> <span class="mi">30</span> <span class="mi">30</span> <span class="mi">31</span> <span class="mi">32</span> <span class="mi">35</span> <span class="mi">31</span> <span class="mi">32</span> <span class="mi">30</span> <span class="mi">30</span> <span class="mi">30</span> <span class="mi">30</span> <span class="mi">5</span><span class="n">a</span> <span class="c1">// 200125120000Z</span>
+
+<span class="c1">// Subject 信息</span>
+<span class="mi">30</span> <span class="mi">18</span>       <span class="c1">// SEQUENCE类型(30), 长度24(18)</span>
+<span class="mi">31</span> <span class="mi">16</span>       <span class="c1">// SET类型(31) 无序数列, 长度22(16)</span>
+<span class="mi">30</span> <span class="mi">14</span>       <span class="c1">// SEQUENCE类型(30), 长度20(14)</span>
+<span class="mo">06</span> <span class="mo">03</span>       <span class="c1">// Object Identifier 类型(06)，长度3(03)</span>
+<span class="mi">55</span> <span class="mo">04</span> <span class="mo">03</span>    <span class="c1">// 2.5.4.3 - id-at-commonName</span>
+<span class="mi">13</span> <span class="mi">0</span><span class="n">d</span>       <span class="c1">// Printable String类型(13) 长度13(d)</span>
+<span class="mi">77</span> <span class="mi">77</span> <span class="mi">77</span> <span class="mi">2</span><span class="n">e</span> <span class="mi">7</span><span class="n">a</span> <span class="mi">68</span> <span class="mi">65</span> <span class="mi">6</span><span class="n">e</span> <span class="mi">6</span><span class="n">c</span> <span class="mi">79</span> <span class="mi">2</span><span class="n">e</span> <span class="mi">63</span> <span class="mi">6</span><span class="n">e</span> <span class="c1">// www.zhenly.cn</span>
+
+<span class="mi">30</span> <span class="mi">82</span> <span class="mo">01</span> <span class="mi">22</span> <span class="c1">// SEQUENCE类型(30), 长度的长度2(82), 长度290(0122)</span>
+
+<span class="mi">30</span> <span class="mi">0</span><span class="n">d</span>       <span class="c1">// SEQUENCE类型(30), 长度13(d)</span>
+<span class="mo">06</span> <span class="mi">09</span>       <span class="c1">// Object Identifier 类型(06)，长度9(09)</span>
+<span class="mi">2</span><span class="n">a</span> <span class="mi">86</span> <span class="mi">48</span> <span class="mi">86</span> <span class="n">f7</span> <span class="mi">0</span><span class="n">d</span> <span class="mo">01</span> <span class="mo">01</span> <span class="mo">01</span>
+<span class="c1">// ‭00101010 10000110 01001000 10000110 ‭11110111‬ 00001101 00000001 00000001 00000001‬</span>
+<span class="c1">// 0101010 00001101001000 000011011101110001101 0000001 0000001 0000001‬</span>
+<span class="c1">// 42 840 113549 1 1 1</span>
+<span class="c1">// 1.2.840.113549.1.1.1</span>
+<span class="c1">// RSA encryption</span>
+<span class="mo">05</span> <span class="mo">00</span> <span class="c1">// Null</span>
+
+<span class="mo">03</span> <span class="mi">82</span> <span class="mo">01</span> <span class="mi">0</span><span class="n">f</span>  <span class="c1">// BIT STRING类型， 长度的长度2(82), 长度‭271‬(010f)</span>
+<span class="mo">00</span>           <span class="c1">// 开始 270位RSA公钥</span>
+<span class="mi">30</span> <span class="mi">82</span> <span class="mo">01</span> <span class="mi">0</span><span class="n">a</span> <span class="mo">02</span> <span class="mi">82</span> <span class="mo">01</span> <span class="mo">01</span> <span class="mo">00</span> <span class="n">b3</span> <span class="n">f3</span> <span class="n">cf</span> <span class="n">fd</span> <span class="n">f4</span> <span class="mi">6</span><span class="n">f</span> <span class="n">bb</span> <span class="n">fd</span> <span class="mi">45</span> <span class="mi">80</span> <span class="n">ae</span> <span class="mi">80</span> <span class="mo">01</span> <span class="mi">8</span><span class="n">e</span> <span class="n">dd</span> <span class="mi">85</span> <span class="n">f4</span> <span class="mi">87</span>
+<span class="mi">18</span> <span class="mi">47</span> <span class="mi">51</span> <span class="n">fa</span> <span class="n">a3</span> <span class="mi">6</span><span class="n">f</span> <span class="n">f3</span> <span class="mi">61</span> <span class="mi">41</span> <span class="mi">47</span> <span class="n">c9</span> <span class="mi">58</span> <span class="n">dd</span> <span class="n">b6</span> <span class="mi">87</span> <span class="n">e3</span> <span class="mi">18</span> <span class="n">df</span> <span class="mo">05</span> <span class="mi">2</span><span class="n">b</span> <span class="mi">14</span> <span class="n">fd</span> <span class="mi">6</span><span class="n">d</span> <span class="mi">31</span> <span class="n">e7</span> <span class="mi">78</span> <span class="n">ef</span>
+<span class="mo">03</span> <span class="n">c9</span> <span class="mi">53</span> <span class="n">b2</span> <span class="mi">5</span><span class="n">f</span> <span class="mi">11</span> <span class="n">fa</span> <span class="mi">49</span> <span class="mi">51</span> <span class="mi">2</span><span class="n">f</span> <span class="mi">56</span> <span class="mi">57</span> <span class="n">c1</span> <span class="mi">84</span> <span class="mi">5</span><span class="n">e</span> <span class="mi">7</span><span class="n">a</span> <span class="n">f9</span> <span class="mi">7</span><span class="n">f</span> <span class="n">c0</span> <span class="mi">55</span> <span class="n">ec</span> <span class="mi">64</span> <span class="mi">26</span> <span class="mi">0</span><span class="n">b</span> <span class="mo">07</span> <span class="mi">2</span><span class="n">e</span> <span class="mi">67</span>
+<span class="mi">99</span> <span class="mi">1</span><span class="n">c</span> <span class="n">c4</span> <span class="mi">65</span> <span class="mi">66</span> <span class="n">de</span> <span class="n">cb</span> <span class="mi">32</span> <span class="n">a9</span> <span class="n">a3</span> <span class="n">ed</span> <span class="mi">96</span> <span class="n">e5</span> <span class="mi">1</span><span class="n">e</span> <span class="mi">0</span><span class="n">f</span> <span class="mi">43</span> <span class="mi">35</span> <span class="n">d9</span> <span class="mi">14</span> <span class="n">d6</span> <span class="mi">4</span><span class="n">f</span> <span class="n">fd</span> <span class="mi">20</span> <span class="n">ed</span> <span class="n">fd</span> <span class="mi">08</span> <span class="mi">2</span><span class="n">e</span>
+<span class="n">b4</span> <span class="n">ad</span> <span class="n">fb</span> <span class="mi">97</span> <span class="mi">44</span> <span class="n">a6</span> <span class="mi">9</span><span class="n">d</span> <span class="mi">5</span><span class="n">f</span> <span class="mo">06</span> <span class="mi">9</span><span class="n">f</span> <span class="mi">24</span> <span class="mi">7</span><span class="n">d</span> <span class="n">dc</span> <span class="n">cf</span> <span class="mi">91</span> <span class="mi">41</span> <span class="n">ca</span> <span class="n">f8</span> <span class="mi">22</span> <span class="mi">49</span> <span class="mi">3</span><span class="n">d</span> <span class="n">ab</span> <span class="mi">47</span> <span class="mi">76</span> <span class="mi">96</span> <span class="mi">88</span> <span class="mi">7</span><span class="n">d</span>
+<span class="mi">69</span> <span class="mi">3</span><span class="n">d</span> <span class="mi">25</span> <span class="n">c6</span> <span class="n">b4</span> <span class="mi">84</span> <span class="mi">6</span><span class="n">d</span> <span class="mi">6</span><span class="n">d</span> <span class="mi">44</span> <span class="n">b4</span> <span class="n">b7</span> <span class="mi">41</span> <span class="mi">65</span> <span class="mi">8</span><span class="n">c</span> <span class="mi">55</span> <span class="mi">16</span> <span class="mi">31</span> <span class="n">c3</span> <span class="mi">56</span> <span class="mi">50</span> <span class="n">a9</span> <span class="mi">49</span> <span class="n">b0</span> <span class="mi">90</span> <span class="n">e5</span> <span class="mi">47</span> <span class="n">ec</span>
+<span class="mi">33</span> <span class="mi">5</span><span class="n">e</span> <span class="mi">80</span> <span class="mi">5</span><span class="n">a</span> <span class="mi">78</span> <span class="mi">9</span><span class="n">a</span> <span class="mi">75</span> <span class="mi">91</span> <span class="mi">6</span><span class="n">e</span> <span class="n">f9</span> <span class="mi">11</span> <span class="n">f8</span> <span class="mi">64</span> <span class="mi">6</span><span class="n">f</span> <span class="n">b1</span> <span class="mi">93</span> <span class="mi">35</span> <span class="n">bb</span> <span class="mi">7</span><span class="n">a</span> <span class="mi">0</span><span class="n">d</span> <span class="n">b2</span> <span class="mi">20</span> <span class="mi">2</span><span class="n">e</span> <span class="n">ca</span> <span class="mi">6</span><span class="n">b</span> <span class="mi">3</span><span class="n">b</span> <span class="mi">63</span>
+<span class="n">c5</span> <span class="n">ef</span> <span class="mi">38</span> <span class="n">e8</span> <span class="n">c0</span> <span class="n">b1</span> <span class="mo">07</span> <span class="mi">72</span> <span class="mi">7</span><span class="n">d</span> <span class="n">c4</span> <span class="n">c6</span> <span class="n">b5</span> <span class="mi">5</span><span class="n">b</span> <span class="n">f7</span> <span class="mi">9</span><span class="n">c</span> <span class="n">e5</span> <span class="n">ae</span> <span class="mi">3</span><span class="n">e</span> <span class="mi">1</span><span class="n">b</span> <span class="n">cb</span> <span class="mi">7</span><span class="n">a</span> <span class="mi">18</span> <span class="mi">6</span><span class="n">c</span> <span class="mi">3</span><span class="n">e</span> <span class="mi">48</span> <span class="n">ef</span> <span class="n">d9</span>
+<span class="mi">88</span> <span class="mi">64</span> <span class="n">d6</span> <span class="mi">63</span> <span class="mi">25</span> <span class="n">a1</span> <span class="mi">56</span> <span class="mi">47</span> <span class="mo">00</span> <span class="mi">0</span><span class="n">e</span> <span class="n">a9</span> <span class="mi">8</span><span class="n">b</span> <span class="n">aa</span> <span class="mi">6</span><span class="n">d</span> <span class="n">ac</span> <span class="n">d6</span> <span class="mi">19</span> <span class="n">c8</span> <span class="n">aa</span> <span class="n">af</span> <span class="n">da</span> <span class="mi">95</span> <span class="mi">28</span> <span class="n">c0</span> <span class="mi">54</span> <span class="mi">32</span> <span class="mi">90</span>
+<span class="mi">0</span><span class="n">c</span> <span class="mi">6</span><span class="n">b</span> <span class="mi">94</span> <span class="mi">1</span><span class="n">f</span> <span class="mi">10</span> <span class="n">cd</span> <span class="mi">16</span> <span class="mi">87</span> <span class="mi">22</span> <span class="n">a9</span> <span class="mi">6</span><span class="n">f</span> <span class="mi">65</span> <span class="mi">70</span> <span class="n">ac</span> <span class="mi">55</span> <span class="n">ad</span> <span class="mi">5</span><span class="n">a</span> <span class="n">a3</span> <span class="n">d5</span> <span class="n">b8</span> <span class="mi">97</span> <span class="n">ab</span> <span class="mo">02</span> <span class="mo">03</span> <span class="mo">01</span> <span class="mo">00</span> <span class="mo">01</span>
+
+
+<span class="n">a3</span> <span class="mi">82</span> <span class="mo">02</span> <span class="mi">7</span><span class="n">d</span> <span class="c1">// 扩展字段(a3),长度的长度2(82),长度637(27d)</span>
+
+<span class="mi">30</span> <span class="mi">82</span> <span class="mo">02</span> <span class="mi">79</span> <span class="c1">// SEQUENCE类型(30),长度的长度2(82), 长度‭633‬(279)</span>
+
+<span class="mi">30</span> <span class="mi">1</span><span class="n">f</span>       <span class="c1">// SEQUENCE类型(30),长度‭‭31‬‬(1f)</span>
+<span class="mo">06</span> <span class="mo">03</span>       <span class="c1">// Object Identifier 类型(06)，长度3(03)</span>
+<span class="mi">55</span> <span class="mi">1</span><span class="n">d</span> <span class="mi">23</span>
+<span class="c1">// ‭01010101 00011101 00100011‬</span>
+<span class="c1">// ‭85‬ 29 35</span>
+<span class="c1">// 2.5.29.35 - Authority Key Identifier</span>
+
+<span class="mo">04</span> <span class="mi">18</span>       <span class="c1">// OCTET STRING类型(04)，长度24(18)</span>
+<span class="mi">30</span> <span class="mi">16</span>       <span class="c1">// SEQUENCE类型(30),长度22(16)</span>
+<span class="mi">80</span> <span class="mi">14</span>       <span class="c1">// 表示证书的版本(80), 长度20(14)</span>
+<span class="mi">7</span><span class="n">f</span> <span class="n">d3</span> <span class="mi">99</span> <span class="n">f3</span> <span class="n">a0</span> <span class="mi">47</span> <span class="mi">0</span><span class="n">e</span> <span class="mi">31</span> <span class="mo">00</span> <span class="mi">56</span> <span class="mi">56</span> <span class="mi">22</span> <span class="mi">8</span><span class="n">e</span> <span class="n">b7</span> <span class="n">cc</span> <span class="mi">9</span><span class="n">e</span> <span class="n">dd</span> <span class="n">ca</span> <span class="mo">01</span> <span class="mi">8</span><span class="n">a</span> <span class="c1">// 7fd399f3a0470e31005656228eb7cc9eddca018a</span>
+
+<span class="mi">30</span> <span class="mi">1</span><span class="n">d</span>       <span class="c1">// SEQUENCE类型(30),长度29‬‬(1d)</span>
+<span class="mo">06</span> <span class="mo">03</span>       <span class="c1">// Object Identifier 类型(06)，长度3(03)</span>
+<span class="mi">55</span> <span class="mi">1</span><span class="n">d</span> <span class="mi">0</span><span class="n">e</span>    <span class="c1">// 2.5.29.14 - Subject Key Identifier</span>
+
+<span class="mo">04</span> <span class="mi">16</span>       <span class="c1">// OCTET STRING类型(04)，长度22(16)</span>
+<span class="mo">04</span> <span class="mi">14</span>       <span class="c1">// OCTET STRING类型(04)，长度20(14)</span>
+<span class="mi">83</span> <span class="n">ad</span> <span class="mi">62</span> <span class="mi">8</span><span class="n">f</span> <span class="n">f3</span> <span class="mi">56</span> <span class="n">c4</span> <span class="mi">1</span><span class="n">b</span> <span class="n">f3</span> <span class="mi">26</span> <span class="mi">5</span><span class="n">e</span> <span class="mi">3</span><span class="n">e</span> <span class="mi">4</span><span class="n">f</span> <span class="mi">5</span><span class="n">f</span> <span class="mi">09</span> <span class="mi">90</span> <span class="mi">1</span><span class="n">e</span> <span class="mi">7</span><span class="n">c</span> <span class="n">fe</span> <span class="n">bf</span> <span class="c1">// 83ad628ff356c41bf3265e3e4f5f09901e7cfebf</span>
+
+<span class="mi">30</span> <span class="mi">23</span>       <span class="c1">// SEQUENCE类型(30),长度35‬‬(23)</span>
+<span class="mo">06</span> <span class="mo">03</span>       <span class="c1">// Object Identifier 类型(06)，长度3(03)</span>
+<span class="mi">55</span> <span class="mi">1</span><span class="n">d</span> <span class="mi">11</span>    <span class="c1">// 2.5.29.17 - Subject Alternative Name</span>
+<span class="mo">04</span> <span class="mi">1</span><span class="n">c</span>       <span class="c1">// OCTET STRING类型(04)，长度28(1c)</span>
+<span class="mi">30</span> <span class="mi">1</span><span class="n">a</span>       <span class="c1">// SEQUENCE类型(30),长度26‬‬(1a)</span>
+<span class="mi">82</span> <span class="mi">0</span><span class="n">d</span>       <span class="c1">// subjectUniqueID表示证书主体的唯一id(82),长度13(d)</span>
+<span class="mi">77</span> <span class="mi">77</span> <span class="mi">77</span> <span class="mi">2</span><span class="n">e</span> <span class="mi">7</span><span class="n">a</span> <span class="mi">68</span> <span class="mi">65</span> <span class="mi">6</span><span class="n">e</span> <span class="mi">6</span><span class="n">c</span> <span class="mi">79</span> <span class="mi">2</span><span class="n">e</span> <span class="mi">63</span> <span class="mi">6</span><span class="n">e</span> <span class="c1">// www.zhenly.cn</span>
+
+<span class="mi">82</span> <span class="mi">09</span>      <span class="c1">// subjectUniqueID表示证书主体的唯一id(82),长度9(09)</span>
+<span class="mi">7</span><span class="n">a</span> <span class="mi">68</span> <span class="mi">65</span> <span class="mi">6</span><span class="n">e</span> <span class="mi">6</span><span class="n">c</span> <span class="mi">79</span> <span class="mi">2</span><span class="n">e</span> <span class="mi">63</span> <span class="mi">6</span><span class="n">e</span> <span class="c1">// zhenly.cn</span>
+
+<span class="mi">30</span> <span class="mi">0</span><span class="n">e</span>       <span class="c1">// SEQUENCE类型(30),长度14‬‬(e)</span>
+<span class="mo">06</span> <span class="mo">03</span>       <span class="c1">// Object Identifier 类型(06)，长度3(03)</span>
+<span class="mi">55</span> <span class="mi">1</span><span class="n">d</span> <span class="mi">0</span><span class="n">f</span>    <span class="c1">// 2.5.29.15 - Key Usage</span>
+<span class="mo">01</span> <span class="mo">01</span>       <span class="c1">// 布尔值类型(01)， 长度1(01)</span>
+<span class="n">ff</span>          <span class="c1">// true</span>
+
+<span class="mo">04</span> <span class="mo">04</span>       <span class="c1">// OCTET STRING类型(04)，长度4(04)</span>
+<span class="mo">03</span> <span class="mo">02</span> <span class="mo">05</span> <span class="n">a0</span> <span class="c1">// ???</span>
+
+<span class="mi">30</span> <span class="mi">1</span><span class="n">d</span>       <span class="c1">// SEQUENCE类型(30),长度29‬‬(1d)</span>
+<span class="mo">06</span> <span class="mo">03</span>       <span class="c1">// Object Identifier 类型(06)，长度3(03)</span>
+<span class="mi">55</span> <span class="mi">1</span><span class="n">d</span> <span class="mi">25</span>    <span class="c1">// 2.5.29.37 - Extended key usage</span>
+
+<span class="mo">04</span> <span class="mi">16</span>       <span class="c1">// OCTET STRING类型(04)，长度22(16)</span>
+<span class="mi">30</span> <span class="mi">14</span>       <span class="c1">// SEQUENCE类型(30),长度20‬‬(14)</span>
+<span class="mo">06</span> <span class="mi">08</span>       <span class="c1">// Object Identifier 类型(06)，长度8(08)</span>
+<span class="mi">2</span><span class="n">b</span> <span class="mo">06</span> <span class="mo">01</span> <span class="mo">05</span> <span class="mo">05</span> <span class="mo">07</span> <span class="mo">03</span> <span class="mo">01</span>
+<span class="c1">// 2b060105 05070301</span>
+<span class="c1">// ‭00101011 00000110 00000001 00000101‬ 0000‭0101 00000111 00000011 00000001‬</span>
+<span class="c1">// ‭0101011 0000110 0000001 0000101‬ 000‭0101 0000111 0000011 0000001‬</span>
+<span class="c1">// 43 6 1 5 5 7 3 1</span>
+<span class="c1">// 1.3.6.1.5.5.7.3.1 - id_kp_serverAuth</span>
+
+<span class="mo">06</span> <span class="mi">08</span>       <span class="c1">// Object Identifier 类型(06)，长度8(08)</span>
+<span class="mi">2</span><span class="n">b</span> <span class="mo">06</span> <span class="mo">01</span> <span class="mo">05</span> <span class="mo">05</span> <span class="mo">07</span> <span class="mo">03</span> <span class="mo">02</span> <span class="c1">// 1.3.6.1.5.5.7.3.2 - id_kp_clientAuth</span>
+
+<span class="mi">30</span> <span class="mi">4</span><span class="n">c</span>       <span class="c1">// SEQUENCE类型(30),长度‭76‬(4c)</span>
+<span class="mo">06</span> <span class="mo">03</span>       <span class="c1">// Object Identifier 类型(06)，长度3(03)</span>
+<span class="mi">55</span> <span class="mi">1</span><span class="n">d</span> <span class="mi">20</span>    <span class="c1">// 2.5.29.32 - Certificate Policies</span>
+
+<span class="mo">04</span> <span class="mi">45</span>       <span class="c1">// OCTET STRING类型(04)，长度69(45)</span>
+<span class="mi">30</span> <span class="mi">43</span>       <span class="c1">// SEQUENCE类型(30),长度‭67‬(43)</span>
+<span class="mi">30</span> <span class="mi">37</span>       <span class="c1">// SEQUENCE类型(30),长度‭55‬(37)</span>
+<span class="mo">06</span> <span class="mi">09</span>       <span class="c1">// Object Identifier 类型(06)，长度9(09)</span>
+<span class="mi">60</span> <span class="mi">86</span> <span class="mi">48</span> <span class="mo">01</span> <span class="mi">86</span> <span class="n">fd</span> <span class="mi">6</span><span class="n">c</span> <span class="mo">01</span> <span class="mo">02</span>
+<span class="c1">// 60864801 86fd6c01 02</span>
+<span class="c1">// ‭01100000 10000110 01001000 00000001‬ ‭10000110 11111101 01101100 00000001‬ 00000010</span>
+<span class="c1">// ‭1100000 00001101001000 0000001‬ ‭000011011111011101100 0000001‬ 0000010</span>
+<span class="c1">// 96 840 1 114412 1 2</span>
+<span class="c1">// 2.16.840.1.114412.1.2 - Digicert EV</span>
+
+<span class="mi">30</span> <span class="mi">2</span><span class="n">a</span>       <span class="c1">// SEQUENCE类型(30),长度‭42(2a)</span>
+<span class="mi">30</span> <span class="mi">28</span>       <span class="c1">// SEQUENCE类型(30),长度‭40(28)</span>
+<span class="mo">06</span> <span class="mi">08</span>       <span class="c1">// Object Identifier 类型(06)，长度8</span>
+<span class="mi">2</span><span class="n">b</span> <span class="mo">06</span> <span class="mo">01</span> <span class="mo">05</span> <span class="mo">05</span> <span class="mo">07</span> <span class="mo">02</span> <span class="mo">01</span>
+<span class="c1">// 2b060105 05070201</span>
+<span class="c1">// 00101011 00000110 00000001 00000101 0000‭0101 00000111 00000010 00000001‬</span>
+<span class="c1">// 0101011 0000110 0000001 0000101 000‭0101 0000111 0000010 0000001‬</span>
+<span class="c1">// 43 6 1 5 5 7 2 1</span>
+<span class="c1">// 1.3.6.1.5.5.7.2.1 - id-qt-cps: OID for CPS qualifier</span>
+
+<span class="mi">16</span> <span class="mi">1</span><span class="n">c</span>       <span class="c1">// IA5String类型(16),长度28</span>
+<span class="mi">68</span> <span class="mi">74</span> <span class="mi">74</span> <span class="mi">70</span> <span class="mi">73</span> <span class="mi">3</span><span class="n">a</span> <span class="mi">2</span><span class="n">f</span> <span class="mi">2</span><span class="n">f</span> <span class="mi">77</span> <span class="mi">77</span> <span class="mi">77</span> <span class="mi">2</span><span class="n">e</span> <span class="mi">64</span> <span class="mi">69</span> <span class="mi">67</span> <span class="mi">69</span> <span class="mi">63</span> <span class="mi">65</span> <span class="mi">72</span> <span class="mi">74</span> <span class="mi">2</span><span class="n">e</span> <span class="mi">63</span> <span class="mi">6</span><span class="n">f</span> <span class="mi">6</span><span class="n">d</span> <span class="mi">2</span><span class="n">f</span> <span class="mi">43</span> <span class="mi">50</span> <span class="mi">53</span> <span class="c1">// https://www.digicert.com/CPS</span>
+
+<span class="mi">30</span> <span class="mi">08</span>       <span class="c1">// SEQUENCE类型(30),长度8</span>
+<span class="mo">06</span> <span class="mo">06</span>       <span class="c1">// Object Identifier 类型(06)，长度6</span>
+<span class="mi">67</span> <span class="mi">81</span> <span class="mi">0</span><span class="n">c</span> <span class="mo">01</span> <span class="mo">02</span> <span class="mo">01</span>
+<span class="c1">// 67810c01 02 01</span>
+<span class="c1">// 01100111 10000001 00001100 00000001 00000002 00000001</span>
+<span class="c1">// 1100111 00000010001100 0000001 0000002 0000001</span>
+<span class="c1">// 103 140 1 2 1</span>
+<span class="c1">// 2.23.140.1.2.1 - domain-validated</span>
+
+<span class="mi">30</span> <span class="mi">81</span> <span class="mi">81</span> <span class="c1">// SEQUENCE类型(30),长度129</span>
+<span class="mo">06</span> <span class="mi">08</span>
+<span class="mi">2</span><span class="n">b</span> <span class="mo">06</span> <span class="mo">01</span> <span class="mo">05</span> <span class="mo">05</span> <span class="mo">07</span> <span class="mo">01</span> <span class="mo">01</span> <span class="c1">// 1.3.6.1.5.5.7.1.1 - id-pe-authorityInfoAccess</span>
+
+<span class="mo">04</span> <span class="mi">75</span>
+<span class="mi">30</span> <span class="mi">73</span>
+<span class="mi">30</span> <span class="mi">25</span>
+<span class="mo">06</span> <span class="mi">08</span>
+<span class="mi">2</span><span class="n">b</span> <span class="mo">06</span> <span class="mo">01</span> <span class="mo">05</span> <span class="mo">05</span> <span class="mo">07</span> <span class="mi">30</span> <span class="mo">01</span> <span class="c1">// 1.3.6.1.5.5.7.48.1 - OCSP</span>
+
+<span class="mi">86</span> <span class="mi">19</span> <span class="c1">// 特殊IA5String类型(86),长度25</span>
+<span class="mi">68</span> <span class="mi">74</span> <span class="mi">74</span> <span class="mi">70</span> <span class="mi">3</span><span class="n">a</span> <span class="mi">2</span><span class="n">f</span> <span class="mi">2</span><span class="n">f</span> <span class="mi">6</span><span class="n">f</span> <span class="mi">63</span> <span class="mi">73</span> <span class="mi">70</span> <span class="mi">32</span> <span class="mi">2</span><span class="n">e</span> <span class="mi">64</span> <span class="mi">69</span> <span class="mi">67</span> <span class="mi">69</span> <span class="mi">63</span> <span class="mi">65</span> <span class="mi">72</span> <span class="mi">74</span> <span class="mi">2</span><span class="n">e</span> <span class="mi">63</span> <span class="mi">6</span><span class="n">f</span> <span class="mi">6</span><span class="n">d</span> <span class="c1">// http://ocsp2.digicert.com</span>
+
+<span class="mi">30</span> <span class="mi">4</span><span class="n">a</span> <span class="c1">// 74</span>
+<span class="mo">06</span> <span class="mi">08</span>
+<span class="mi">2</span><span class="n">b</span> <span class="mo">06</span> <span class="mo">01</span> <span class="mo">05</span> <span class="mo">05</span> <span class="mo">07</span> <span class="mi">30</span> <span class="mo">02</span> <span class="c1">// 1.3.6.1.5.5.7.48.2 - id-ad-caIssuers</span>
+
+<span class="mi">86</span> <span class="mi">3</span><span class="n">e</span> <span class="c1">// 特殊IA5String类型(86),长度62</span>
+<span class="mi">68</span> <span class="mi">74</span> <span class="mi">74</span> <span class="mi">70</span> <span class="mi">3</span><span class="n">a</span> <span class="mi">2</span><span class="n">f</span> <span class="mi">2</span><span class="n">f</span> <span class="mi">63</span> <span class="mi">61</span> <span class="mi">63</span>
+<span class="mi">65</span> <span class="mi">72</span> <span class="mi">74</span> <span class="mi">73</span> <span class="mi">2</span><span class="n">e</span> <span class="mi">64</span> <span class="mi">69</span> <span class="mi">67</span> <span class="mi">69</span> <span class="mi">74</span>
+<span class="mi">61</span> <span class="mi">6</span><span class="n">c</span> <span class="mi">63</span> <span class="mi">65</span> <span class="mi">72</span> <span class="mi">74</span> <span class="mi">76</span> <span class="mi">61</span> <span class="mi">6</span><span class="n">c</span> <span class="mi">69</span>
+<span class="mi">64</span> <span class="mi">61</span> <span class="mi">74</span> <span class="mi">69</span> <span class="mi">6</span><span class="n">f</span> <span class="mi">6</span><span class="n">e</span> <span class="mi">2</span><span class="n">e</span> <span class="mi">63</span> <span class="mi">6</span><span class="n">f</span> <span class="mi">6</span><span class="n">d</span>
+<span class="mi">2</span><span class="n">f</span> <span class="mi">54</span> <span class="mi">72</span> <span class="mi">75</span> <span class="mi">73</span> <span class="mi">74</span> <span class="mi">41</span> <span class="mi">73</span> <span class="mi">69</span> <span class="mi">61</span>
+<span class="mi">54</span> <span class="mi">4</span><span class="n">c</span> <span class="mi">53</span> <span class="mi">52</span> <span class="mi">53</span> <span class="mi">41</span> <span class="mi">43</span> <span class="mi">41</span> <span class="mi">2</span><span class="n">e</span> <span class="mi">63</span> <span class="mi">72</span> <span class="mi">74</span> <span class="c1">// http://cacerts.digitalcertvalidation.com/TrustAsiaTLSRSACA.crt</span>
+
+<span class="mi">30</span> <span class="mi">09</span>
+<span class="mo">06</span> <span class="mo">03</span>
+<span class="mi">55</span> <span class="mi">1</span><span class="n">d</span> <span class="mi">13</span> <span class="c1">// 2.5.29.19 - Basic Constraints</span>
+<span class="mo">04</span> <span class="mo">02</span>
+<span class="mi">30</span> <span class="mo">00</span>
+
+<span class="mi">30</span> <span class="mi">82</span> <span class="mo">01</span> <span class="mo">04</span> <span class="c1">// 206</span>
+
+<span class="mo">06</span> <span class="mi">0</span><span class="n">a</span>
+<span class="mi">2</span><span class="n">b</span> <span class="mo">06</span> <span class="mo">01</span> <span class="mo">04</span> <span class="mo">01</span> <span class="n">d6</span> <span class="mi">79</span> <span class="mo">02</span> <span class="mo">04</span> <span class="mo">02</span>
+<span class="c1">// 2b060104 01d67902 0402</span>
+<span class="c1">// 00101011 00000110 00000001 00000100 00000001 11010110 01111001 00000010 00000100 00000010</span>
+<span class="c1">// 0101011 0000110 0000001 0000100 0000001 10101101111001 0000010 0000100 0000010</span>
+<span class="c1">// 43 6 1 4 1 11129 2 4 2</span>
+<span class="c1">// 1.3.6.1.4.1.11129.2.4.2 - x.509 extension for certificate transparency SCTs</span>
+
+<span class="mo">04</span> <span class="mi">81</span> <span class="n">f5</span> <span class="c1">// 245</span>
+<span class="mo">04</span> <span class="mi">81</span> <span class="n">f2</span> <span class="c1">// 242</span>
+<span class="mo">00</span> <span class="c1">// 开始241个字符</span>
+<span class="n">f0</span> <span class="mo">00</span> <span class="mi">76</span> <span class="mo">00</span> <span class="n">a4</span> <span class="n">b9</span> <span class="mi">09</span> <span class="mi">90</span> <span class="n">b4</span> <span class="mi">18</span> <span class="mi">58</span> <span class="mi">14</span> <span class="mi">87</span> <span class="n">bb</span> <span class="mi">13</span> <span class="n">a2</span> <span class="n">cc</span> <span class="mi">67</span> <span class="mi">70</span> <span class="mi">0</span><span class="n">a</span>
+<span class="mi">3</span><span class="n">c</span> <span class="mi">35</span> <span class="mi">98</span> <span class="mo">04</span> <span class="n">f9</span> <span class="mi">1</span><span class="n">b</span> <span class="n">df</span> <span class="n">b8</span> <span class="n">e3</span> <span class="mi">77</span> <span class="n">cd</span> <span class="mi">0</span><span class="n">e</span> <span class="n">c8</span> <span class="mi">0</span><span class="n">d</span> <span class="n">dc</span> <span class="mi">10</span> <span class="mo">00</span> <span class="mo">00</span> <span class="mo">01</span> <span class="mi">66</span>
+<span class="n">b3</span> <span class="mi">86</span> <span class="mi">13</span> <span class="n">a9</span> <span class="mo">00</span> <span class="mo">00</span> <span class="mo">04</span> <span class="mo">03</span> <span class="mo">00</span> <span class="mi">47</span> <span class="mi">30</span> <span class="mi">45</span> <span class="mo">02</span> <span class="mi">21</span> <span class="mo">00</span> <span class="n">da</span> <span class="n">a3</span> <span class="mi">73</span> <span class="mi">26</span> <span class="mi">49</span>
+<span class="n">ec</span> <span class="mi">0</span><span class="n">e</span> <span class="mi">64</span> <span class="mi">42</span> <span class="mi">48</span> <span class="mi">9</span><span class="n">f</span> <span class="mo">00</span> <span class="n">ba</span> <span class="mi">6</span><span class="n">e</span> <span class="n">d9</span> <span class="n">fa</span> <span class="mi">1</span><span class="n">c</span> <span class="mi">85</span> <span class="n">ca</span> <span class="n">aa</span> <span class="n">db</span> <span class="n">ad</span> <span class="n">a5</span> <span class="mi">16</span> <span class="mi">57</span>
+<span class="mi">2</span><span class="n">a</span> <span class="mi">47</span> <span class="mi">27</span> <span class="mi">3</span><span class="n">f</span> <span class="mi">2</span><span class="n">b</span> <span class="mi">2</span><span class="n">e</span> <span class="n">bb</span> <span class="mo">02</span> <span class="mi">20</span> <span class="mi">6</span><span class="n">a</span> <span class="mi">4</span><span class="n">e</span> <span class="mi">48</span> <span class="mi">20</span> <span class="mi">74</span> <span class="mi">97</span> <span class="mi">33</span> <span class="n">fc</span> <span class="n">e9</span> <span class="n">a4</span> <span class="mo">00</span>
+<span class="mi">25</span> <span class="n">c5</span> <span class="n">ce</span> <span class="n">be</span> <span class="mi">78</span> <span class="n">d9</span> <span class="n">fd</span> <span class="mi">68</span> <span class="mi">66</span> <span class="mi">58</span> <span class="mi">3</span><span class="n">b</span> <span class="n">e1</span> <span class="n">f8</span> <span class="mi">98</span> <span class="mi">18</span> <span class="mi">4</span><span class="n">e</span> <span class="n">f4</span> <span class="n">a6</span> <span class="mi">4</span><span class="n">e</span> <span class="mi">2</span><span class="n">b</span>
+<span class="n">a5</span> <span class="mo">00</span> <span class="mi">76</span> <span class="mo">00</span> <span class="mi">87</span> <span class="mi">75</span> <span class="n">bf</span> <span class="n">e7</span> <span class="mi">59</span> <span class="mi">7</span><span class="n">c</span> <span class="n">f8</span> <span class="mi">8</span><span class="n">c</span> <span class="mi">43</span> <span class="mi">99</span> <span class="mi">5</span><span class="n">f</span> <span class="n">bd</span> <span class="n">f3</span> <span class="mi">6</span><span class="n">e</span> <span class="n">ff</span> <span class="mi">56</span>
+<span class="mi">8</span><span class="n">d</span> <span class="mi">47</span> <span class="mi">56</span> <span class="mi">36</span> <span class="n">ff</span> <span class="mi">4</span><span class="n">a</span> <span class="n">b5</span> <span class="mi">60</span> <span class="n">c1</span> <span class="n">b4</span> <span class="n">ea</span> <span class="n">ff</span> <span class="mi">5</span><span class="n">e</span> <span class="n">a0</span> <span class="mi">83</span> <span class="mi">0</span><span class="n">f</span> <span class="mo">00</span> <span class="mo">00</span> <span class="mo">01</span> <span class="mi">66</span>
+<span class="n">b3</span> <span class="mi">86</span> <span class="mi">14</span> <span class="mi">90</span> <span class="mo">00</span> <span class="mo">00</span> <span class="mo">04</span> <span class="mo">03</span> <span class="mo">00</span> <span class="mi">47</span> <span class="mi">30</span> <span class="mi">45</span> <span class="mo">02</span> <span class="mi">20</span> <span class="mi">3</span><span class="n">f</span> <span class="mi">27</span> <span class="n">e1</span> <span class="mi">9</span><span class="n">e</span> <span class="n">cc</span> <span class="mi">65</span>
+<span class="mi">2</span><span class="n">e</span> <span class="mi">3</span><span class="n">c</span> <span class="n">d6</span> <span class="mi">67</span> <span class="n">cf</span> <span class="mi">78</span> <span class="n">f5</span> <span class="mi">0</span><span class="n">b</span> <span class="mo">03</span> <span class="mi">90</span> <span class="n">fa</span> <span class="mi">7</span><span class="n">c</span> <span class="mi">08</span> <span class="n">b5</span> <span class="mi">11</span> <span class="mi">29</span> <span class="n">c1</span> <span class="mi">85</span> <span class="mi">22</span> <span class="mi">21</span>
+<span class="mi">10</span> <span class="mi">36</span> <span class="mi">21</span> <span class="n">c8</span> <span class="mi">40</span> <span class="n">e5</span> <span class="mo">02</span> <span class="mi">21</span> <span class="mo">00</span> <span class="n">ad</span> <span class="mi">36</span> <span class="n">ed</span> <span class="n">be</span> <span class="mi">18</span> <span class="n">ee</span> <span class="n">b6</span> <span class="n">a6</span> <span class="n">cd</span> <span class="n">c0</span> <span class="n">d4</span>
+<span class="mi">96</span> <span class="mi">74</span> <span class="mi">62</span> <span class="mi">2</span><span class="n">b</span> <span class="mi">97</span> <span class="n">cc</span> <span class="n">d9</span> <span class="n">b5</span> <span class="n">cf</span> <span class="mi">27</span> <span class="mi">9</span><span class="n">a</span> <span class="mi">8</span><span class="n">a</span> <span class="mi">52</span> <span class="mi">61</span> <span class="mi">84</span> <span class="mi">57</span> <span class="mi">22</span> <span class="mi">60</span> <span class="n">c6</span> <span class="n">b9</span> <span class="mi">5</span><span class="n">e</span>
+
+<span class="mi">30</span> <span class="mi">0</span><span class="n">d</span>
+<span class="mo">06</span> <span class="mi">09</span>
+<span class="mi">2</span><span class="n">a</span> <span class="mi">86</span> <span class="mi">48</span> <span class="mi">86</span> <span class="n">f7</span> <span class="mi">0</span><span class="n">d</span> <span class="mo">01</span> <span class="mo">01</span> <span class="mi">0</span><span class="n">b</span> <span class="c1">// 1.2.840.113549.1.1.11 - sha256WithRSAEncryption</span>
+<span class="mo">05</span> <span class="mo">00</span>
+
+<span class="mo">03</span> <span class="mi">82</span> <span class="mo">01</span> <span class="mo">01</span> <span class="c1">// 257</span>
+<span class="mo">00</span> <span class="c1">// 开始256</span>
+<span class="mi">63</span> <span class="n">bf</span> <span class="mi">1</span><span class="n">a</span> <span class="n">ec</span> <span class="mi">14</span> <span class="mi">19</span> <span class="n">fc</span> <span class="mi">15</span> <span class="n">f6</span> <span class="mi">3</span><span class="n">f</span> <span class="n">cf</span> <span class="mi">1</span><span class="n">f</span> <span class="mi">13</span> <span class="mi">9</span><span class="n">a</span> <span class="mi">67</span> <span class="n">fa</span> <span class="mi">47</span> <span class="mi">60</span> <span class="mi">6</span><span class="n">d</span> <span class="mi">8</span><span class="n">d</span>
+<span class="mi">5</span><span class="n">a</span> <span class="mi">9</span><span class="n">d</span> <span class="mi">45</span> <span class="mo">04</span> <span class="n">ce</span> <span class="mi">4</span><span class="n">e</span> <span class="n">cd</span> <span class="mi">76</span> <span class="mi">86</span> <span class="mi">96</span> <span class="n">fc</span> <span class="mi">4</span><span class="n">f</span> <span class="mi">62</span> <span class="mi">1</span><span class="n">d</span> <span class="n">ca</span> <span class="n">a0</span> <span class="n">f0</span> <span class="mi">4</span><span class="n">e</span> <span class="mi">24</span> <span class="n">b3</span>
+<span class="n">ad</span> <span class="n">c5</span> <span class="n">ee</span> <span class="mi">85</span> <span class="n">d9</span> <span class="n">fe</span> <span class="mi">8</span><span class="n">c</span> <span class="mi">64</span> <span class="mi">20</span> <span class="mi">0</span><span class="n">e</span> <span class="mi">50</span> <span class="mi">97</span> <span class="n">d5</span> <span class="mi">62</span> <span class="mi">11</span> <span class="n">c5</span> <span class="mi">20</span> <span class="n">e3</span> <span class="mi">4</span><span class="n">c</span> <span class="mi">7</span><span class="n">b</span>
+<span class="mi">98</span> <span class="mi">82</span> <span class="mi">57</span> <span class="mi">82</span> <span class="mi">0</span><span class="n">e</span> <span class="mi">95</span> <span class="mi">27</span> <span class="mi">2</span><span class="n">d</span> <span class="n">a8</span> <span class="mi">94</span> <span class="n">df</span> <span class="mi">16</span> <span class="mi">20</span> <span class="mi">47</span> <span class="n">a9</span> <span class="n">b2</span> <span class="mi">53</span> <span class="mi">58</span> <span class="mi">56</span> <span class="n">d3</span>
+<span class="mi">39</span> <span class="mi">11</span> <span class="n">c2</span> <span class="mi">5</span><span class="n">a</span> <span class="mi">57</span> <span class="mi">20</span> <span class="n">c1</span> <span class="mi">8</span><span class="n">c</span> <span class="n">e7</span> <span class="mi">31</span> <span class="mi">62</span> <span class="mi">6</span><span class="n">a</span> <span class="mi">25</span> <span class="mi">4</span><span class="n">c</span> <span class="n">b1</span> <span class="mi">38</span> <span class="mi">39</span> <span class="mi">97</span> <span class="mi">2</span><span class="n">e</span> <span class="mi">41</span>
+<span class="mi">6</span><span class="n">d</span> <span class="mi">58</span> <span class="n">c6</span> <span class="n">ac</span> <span class="mo">02</span> <span class="mi">23</span> <span class="mi">45</span> <span class="n">e5</span> <span class="n">f2</span> <span class="mi">4</span><span class="n">d</span> <span class="mi">1</span><span class="n">f</span> <span class="mi">92</span> <span class="mi">16</span> <span class="mi">49</span> <span class="n">c8</span> <span class="n">a9</span> <span class="mi">6</span><span class="n">e</span> <span class="n">fc</span> <span class="n">bd</span> <span class="mi">1</span><span class="n">a</span>
+<span class="n">e1</span> <span class="n">dd</span> <span class="n">f0</span> <span class="mi">25</span> <span class="mi">4</span><span class="n">d</span> <span class="n">e8</span> <span class="mi">57</span> <span class="mi">4</span><span class="n">d</span> <span class="mi">93</span> <span class="mi">10</span> <span class="mi">7</span><span class="n">c</span> <span class="mi">10</span> <span class="mi">63</span> <span class="mi">0</span><span class="n">a</span> <span class="mi">0</span><span class="n">a</span> <span class="n">be</span> <span class="mi">51</span> <span class="mi">68</span> <span class="n">ec</span> <span class="n">f1</span>
+<span class="n">be</span> <span class="n">da</span> <span class="n">c7</span> <span class="mi">65</span> <span class="mi">22</span> <span class="n">a8</span> <span class="mi">61</span> <span class="mi">5</span><span class="n">c</span> <span class="mi">2</span><span class="n">a</span> <span class="mi">7</span><span class="n">d</span> <span class="mi">40</span> <span class="n">dd</span> <span class="mo">02</span> <span class="mi">28</span> <span class="n">ee</span> <span class="n">b3</span> <span class="mi">1</span><span class="n">d</span> <span class="n">b9</span> <span class="mi">78</span> <span class="mi">0</span><span class="n">d</span>
+<span class="n">b4</span> <span class="mi">76</span> <span class="mi">1</span><span class="n">c</span> <span class="mi">72</span> <span class="n">ad</span> <span class="mi">89</span> <span class="n">d5</span> <span class="mi">44</span> <span class="mi">12</span> <span class="mi">4</span><span class="n">b</span> <span class="mi">42</span> <span class="n">aa</span> <span class="mo">07</span> <span class="mi">77</span> <span class="mi">14</span> <span class="mi">4</span><span class="n">d</span> <span class="mi">38</span> <span class="n">d5</span> <span class="mi">81</span> <span class="mi">4</span><span class="n">b</span>
+<span class="n">e5</span> <span class="mi">09</span> <span class="n">cc</span> <span class="mi">3</span><span class="n">d</span> <span class="n">ba</span> <span class="n">ca</span> <span class="n">c9</span> <span class="n">aa</span> <span class="n">b6</span> <span class="n">b1</span> <span class="mi">60</span> <span class="mi">34</span> <span class="mi">5</span><span class="n">d</span> <span class="mi">89</span> <span class="mi">86</span> <span class="n">cf</span> <span class="mi">78</span> <span class="n">a7</span> <span class="n">bf</span> <span class="n">a5</span>
+<span class="n">b8</span> <span class="n">be</span> <span class="mi">85</span> <span class="mi">0</span><span class="n">b</span> <span class="n">b9</span> <span class="mi">14</span> <span class="mi">0</span><span class="n">f</span> <span class="n">a7</span> <span class="mi">2</span><span class="n">d</span> <span class="mi">7</span><span class="n">a</span> <span class="mi">4</span><span class="n">c</span> <span class="n">d0</span> <span class="mi">2</span><span class="n">f</span> <span class="n">ee</span> <span class="mi">86</span> <span class="mi">20</span> <span class="mo">02</span> <span class="n">cf</span> <span class="mi">9</span><span class="n">d</span> <span class="n">d1</span>
+<span class="mo">01</span> <span class="mi">18</span> <span class="mi">9</span><span class="n">a</span> <span class="n">c0</span> <span class="n">a1</span> <span class="mi">95</span> <span class="mi">8</span><span class="n">a</span> <span class="mi">8</span><span class="n">f</span> <span class="n">d8</span> <span class="n">dc</span> <span class="mi">3</span><span class="n">a</span> <span class="mi">60</span> <span class="n">ad</span> <span class="mi">67</span> <span class="mi">72</span> <span class="mi">56</span> <span class="n">a5</span> <span class="mi">10</span> <span class="n">dd</span> <span class="n">d9</span>
+<span class="mi">81</span> <span class="n">e5</span> <span class="mi">3</span><span class="n">e</span> <span class="mi">72</span> <span class="n">ba</span> <span class="n">d6</span> <span class="n">b1</span> <span class="n">cd</span> <span class="mi">8</span><span class="n">b</span> <span class="mi">2</span><span class="n">c</span> <span class="mi">3</span><span class="n">a</span> <span class="mi">21</span> <span class="mi">90</span> <span class="mi">10</span> <span class="mi">0</span><span class="n">a</span> <span class="mi">27</span>
+</code></pre></div></div>
+
+<h2 id="c-语言源代码">C 语言源代码</h2>
+
+<p>代码仓库： <a href="https://github.com/ZhenlyChen/X.509Reader">Github</a></p>
+
+<h3 id="读取文件">读取文件</h3>
+
+<p>首先读取证书文件，将其的</p>
+
+<p><code class="language-plaintext highlighter-rouge">-----BEGIN CERTIFICATE-----</code>和<code class="language-plaintext highlighter-rouge">-----END CERTIFICATE-----</code>之中的Base64编码读取到字符串中</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// main.cpp</span>
+<span class="n">string</span> <span class="n">fileName</span><span class="p">;</span>
+<span class="n">string</span> <span class="n">base64Str</span> <span class="o">=</span> <span class="s">""</span><span class="p">;</span>
+<span class="n">fileName</span> <span class="o">=</span> <span class="n">string</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+<span class="n">ifstream</span> <span class="nf">in</span><span class="p">(</span><span class="n">fileName</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">in</span><span class="p">.</span><span class="n">is_open</span><span class="p">())</span> <span class="p">{</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Error opening file"</span><span class="p">;</span>
+  <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">fileName</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="kt">char</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
+<span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">in</span><span class="p">.</span><span class="n">eof</span><span class="p">())</span> <span class="p">{</span>
+  <span class="n">in</span><span class="p">.</span><span class="n">getline</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="mi">1024</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">string</span><span class="p">(</span><span class="n">buffer</span><span class="p">).</span><span class="n">find</span><span class="p">(</span><span class="s">"BEGIN CERTIFICATE"</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Begin"</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">string</span><span class="p">(</span><span class="n">buffer</span><span class="p">).</span><span class="n">find</span><span class="p">(</span><span class="s">"END CERTIFICATE"</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">parseX509</span><span class="p">(</span><span class="n">base64Str</span><span class="p">);</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"End"</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="n">base64Str</span> <span class="o">=</span> <span class="s">""</span><span class="p">;</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="n">base64Str</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">buffer</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="base64解码">Base64解码</h3>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// x509.cpp</span>
+
+<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">base64_chars</span> <span class="o">=</span>
+    <span class="s">"ABCDEFGHIJKLMNOPQRSTUVWXYZ"</span>
+    <span class="s">"abcdefghijklmnopqrstuvwxyz"</span>
+    <span class="s">"0123456789+/"</span><span class="p">;</span>
+
+<span class="k">while</span> <span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">length</span><span class="p">()</span> <span class="o">%</span> <span class="mi">4</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Error"</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+  <span class="n">data</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="s">"="</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">length</span><span class="p">()</span> <span class="o">/</span> <span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="mi">3</span><span class="p">;</span>
+<span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"证书长度："</span> <span class="o">&lt;&lt;</span> <span class="n">len</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="n">byte</span> <span class="n">text</span><span class="p">[</span><span class="n">len</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+<span class="kt">int</span> <span class="n">textIndex</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">data</span><span class="p">.</span><span class="n">length</span><span class="p">();</span> <span class="n">i</span> <span class="o">+=</span> <span class="mi">4</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">byte</span> <span class="n">base64_bit_6</span><span class="p">[</span><span class="mi">4</span><span class="p">];</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">base64_bit_6</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">base64_chars</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="p">]);</span>
+  <span class="p">}</span>
+  <span class="n">text</span><span class="p">[</span><span class="n">textIndex</span><span class="p">]</span> <span class="o">=</span>
+    <span class="p">((</span><span class="n">base64_bit_6</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x3f</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="o">|</span> <span class="p">((</span><span class="n">base64_bit_6</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x30</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">4</span><span class="p">);</span>
+  <span class="n">text</span><span class="p">[</span><span class="n">textIndex</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span>
+    <span class="p">((</span><span class="n">base64_bit_6</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0xf</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">4</span><span class="p">)</span> <span class="o">|</span> <span class="p">((</span><span class="n">base64_bit_6</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x3c</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">2</span><span class="p">);</span>
+  <span class="n">text</span><span class="p">[</span><span class="n">textIndex</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span>
+    <span class="p">((</span><span class="n">base64_bit_6</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x3</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">6</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">base64_bit_6</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x3f</span><span class="p">);</span>
+  <span class="n">textIndex</span> <span class="o">+=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="ans1解码">ANS.1解码</h3>
+
+<p>解析</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">parseANS</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>这里使用递归的方式解析将二进制数据根据ANS.1中的长度将其划分为不同的部分进行解析</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">len</span><span class="p">;</span>     <span class="c1">// 长度</span>
+  <span class="kt">int</span> <span class="n">lenLen</span><span class="p">;</span>  <span class="c1">// 长度所占的长度</span>
+<span class="p">}</span> <span class="n">lenData</span><span class="p">;</span>     <span class="c1">// 长度信息</span>
+
+<span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+  <span class="n">string</span> <span class="n">title</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">len</span><span class="p">;</span>
+  <span class="n">byte</span><span class="o">*</span> <span class="n">data</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">type</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">Item</span><span class="p">;</span>  <span class="c1">// 解析项目</span>
+
+<span class="n">vector</span><span class="o">&lt;</span><span class="n">Item</span><span class="o">&gt;</span> <span class="n">ansData</span><span class="p">;</span>
+
+<span class="c1">// 长度、长度占用</span>
+<span class="n">lenData</span> <span class="nf">getLen</span><span class="p">(</span><span class="n">byte</span><span class="o">*</span> <span class="n">data</span><span class="p">,</span> <span class="kt">int</span> <span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">lenData</span> <span class="n">res</span><span class="p">;</span>
+  <span class="n">res</span><span class="p">.</span><span class="n">lenLen</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x80</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">len_len</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x7f</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">len</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">i</span><span class="o">++</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">len_len</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">len</span> <span class="o">&lt;&lt;=</span> <span class="mi">8</span><span class="p">;</span>
+      <span class="n">len</span> <span class="o">+=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="p">];</span>
+    <span class="p">}</span>
+    <span class="n">res</span><span class="p">.</span><span class="n">len</span> <span class="o">=</span> <span class="n">len</span><span class="p">;</span>
+    <span class="n">res</span><span class="p">.</span><span class="n">lenLen</span> <span class="o">+=</span> <span class="n">len_len</span><span class="p">;</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="n">res</span><span class="p">.</span><span class="n">len</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x7f</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">parseANS</span><span class="p">(</span><span class="n">byte</span><span class="o">*</span> <span class="n">data</span><span class="p">,</span> <span class="kt">int</span> <span class="n">begin</span><span class="p">,</span> <span class="kt">int</span> <span class="n">end</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">begin</span><span class="p">;</span>
+  <span class="n">lenData</span> <span class="n">lens</span><span class="p">;</span>
+  <span class="n">byte</span><span class="o">*</span> <span class="n">text</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">oiFirst</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">oiIndex</span><span class="p">;</span>
+  <span class="n">string</span> <span class="n">title</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">type</span><span class="p">;</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">end</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">type</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+    <span class="n">i</span><span class="o">++</span><span class="p">;</span>
+    <span class="n">lens</span> <span class="o">=</span> <span class="n">getLen</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">lens</span><span class="p">.</span><span class="n">lenLen</span> <span class="o">&lt;=</span> <span class="n">end</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">i</span> <span class="o">+=</span> <span class="n">lens</span><span class="p">.</span><span class="n">lenLen</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">lens</span><span class="p">.</span><span class="n">len</span> <span class="o">&lt;</span><span class="mi">0</span> <span class="o">||</span> <span class="n">i</span> <span class="o">+</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span> <span class="o">&gt;</span> <span class="n">end</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="s">""</span><span class="p">;</span>
+    <span class="k">switch</span> <span class="p">(</span><span class="n">type</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">case</span> <span class="mh">0x30</span><span class="p">:</span>  <span class="c1">// 结构体序列</span>
+        <span class="n">parseANS</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">);</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="mh">0x31</span><span class="p">:</span>  <span class="c1">// Set序列</span>
+        <span class="n">parseANS</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">);</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="mh">0xa3</span><span class="p">:</span>  <span class="c1">// 扩展字段</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="s">"Extension"</span><span class="p">;</span>
+        <span class="n">ansData</span><span class="p">.</span><span class="n">push_back</span><span class="p">({</span><span class="n">title</span><span class="p">,</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">type</span><span class="p">});</span>
+        <span class="n">parseANS</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">);</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="mh">0xa0</span><span class="p">:</span>  <span class="c1">// 证书版本</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="s">"Version"</span><span class="p">;</span>
+        <span class="n">ansData</span><span class="p">.</span><span class="n">push_back</span><span class="p">({</span><span class="n">title</span><span class="p">,</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">type</span><span class="p">});</span>
+        <span class="n">parseANS</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">);</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="mh">0x04</span><span class="p">:</span>  <span class="c1">// OCTET STRING</span>
+        <span class="c1">// title = "Octet";</span>
+        <span class="c1">// ansData.push_back({title, lens.len, NULL, type});</span>
+        <span class="n">parseANS</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">);</span>
+      <span class="k">case</span> <span class="mh">0x05</span><span class="p">:</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="mh">0x06</span><span class="p">:</span>  <span class="c1">// Object Identifier</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="s">""</span><span class="p">;</span>
+        <span class="n">oiFirst</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x7f</span><span class="p">;</span>
+        <span class="n">oiIndex</span> <span class="o">=</span> <span class="n">min</span><span class="p">(</span><span class="n">oiFirst</span> <span class="o">/</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+        <span class="n">title</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">to_string</span><span class="p">(</span><span class="n">min</span><span class="p">(</span><span class="n">oiFirst</span> <span class="o">/</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">2</span><span class="p">)));</span>
+        <span class="n">title</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="s">"."</span><span class="p">);</span>
+        <span class="n">title</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">to_string</span><span class="p">(</span><span class="n">oiFirst</span> <span class="o">-</span> <span class="mi">40</span> <span class="o">*</span> <span class="n">oiIndex</span><span class="p">));</span>
+        <span class="n">title</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="s">"."</span><span class="p">);</span>
+        <span class="n">oiIndex</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+        <span class="n">oiFirst</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">;</span> <span class="n">t</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+          <span class="n">oiFirst</span> <span class="o">&lt;&lt;=</span> <span class="mi">7</span><span class="p">;</span>
+          <span class="n">oiFirst</span> <span class="o">+=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">t</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x7f</span><span class="p">;</span>
+          <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">t</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0x80</span><span class="p">))</span> <span class="p">{</span>
+            <span class="n">title</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">to_string</span><span class="p">(</span><span class="n">oiFirst</span><span class="p">));</span>
+            <span class="n">title</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="s">"."</span><span class="p">);</span>
+            <span class="n">oiIndex</span><span class="o">++</span><span class="p">;</span>
+            <span class="n">oiFirst</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+          <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="n">ansData</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">title</span><span class="p">.</span><span class="n">substr</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">title</span><span class="p">.</span><span class="n">length</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">type</span><span class="p">});</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="mh">0x17</span><span class="p">:</span>  <span class="c1">// 时间戳</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="s">"UTCTime"</span><span class="p">;</span>
+      <span class="k">case</span> <span class="mh">0x13</span><span class="p">:</span>  <span class="c1">// 字符串</span>
+      <span class="k">case</span> <span class="mh">0x82</span><span class="p">:</span>  <span class="c1">// subjectUniqueID</span>
+      <span class="k">case</span> <span class="mh">0x16</span><span class="p">:</span>  <span class="c1">// IA5String类型</span>
+      <span class="k">case</span> <span class="mh">0x0c</span><span class="p">:</span>  <span class="c1">// UTF8String类型</span>
+      <span class="k">case</span> <span class="mh">0x86</span><span class="p">:</span>  <span class="c1">// 特殊IA5String类型</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">;</span> <span class="n">t</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+          <span class="n">title</span> <span class="o">+=</span> <span class="p">(</span><span class="kt">char</span><span class="p">)</span><span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">t</span><span class="p">];</span>
+        <span class="p">}</span>
+        <span class="n">ansData</span><span class="p">.</span><span class="n">push_back</span><span class="p">({</span><span class="n">title</span><span class="p">,</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">type</span><span class="p">});</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="mh">0x01</span><span class="p">:</span>  <span class="c1">// 布尔类型</span>
+        <span class="n">oiFirst</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">;</span> <span class="n">t</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+          <span class="n">oiFirst</span> <span class="o">&amp;=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">t</span><span class="p">];</span>
+        <span class="p">}</span>
+        <span class="n">ansData</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">oiFirst</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">?</span> <span class="s">"False"</span> <span class="o">:</span> <span class="s">"True"</span><span class="p">,</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">type</span><span class="p">});</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="mh">0x02</span><span class="p">:</span>  <span class="c1">// 整数类型</span>
+      <span class="k">case</span> <span class="mh">0x80</span><span class="p">:</span>  <span class="c1">// 直接输出</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="k">new</span> <span class="n">byte</span><span class="p">[</span><span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">];</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">;</span> <span class="n">t</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+          <span class="n">text</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">t</span><span class="p">];</span>
+        <span class="p">}</span>
+        <span class="n">ansData</span><span class="p">.</span><span class="n">push_back</span><span class="p">({</span><span class="n">title</span><span class="p">,</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">type</span><span class="p">});</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="mh">0x03</span><span class="p">:</span>  <span class="c1">// Bit String 类型</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="k">new</span> <span class="n">byte</span><span class="p">[</span><span class="n">lens</span><span class="p">.</span><span class="n">len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">];</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span> <span class="n">t</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+          <span class="n">text</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">];</span>
+        <span class="p">}</span>
+        <span class="n">ansData</span><span class="p">.</span><span class="n">push_back</span><span class="p">({</span><span class="s">""</span><span class="p">,</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">type</span><span class="p">});</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">case</span> <span class="mh">0x00</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="k">new</span> <span class="n">byte</span><span class="p">[</span><span class="n">end</span> <span class="o">-</span> <span class="n">begin</span><span class="p">];</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">t</span> <span class="o">=</span> <span class="n">begin</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">end</span><span class="p">;</span> <span class="n">t</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+          <span class="n">text</span><span class="p">[</span><span class="n">t</span> <span class="o">-</span> <span class="n">begin</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">t</span><span class="p">];</span>
+        <span class="p">}</span>
+        <span class="n">ansData</span><span class="p">.</span><span class="n">push_back</span><span class="p">({</span><span class="s">"0x00"</span><span class="p">,</span> <span class="n">end</span> <span class="o">-</span> <span class="n">begin</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">type</span><span class="p">});</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="k">default</span><span class="o">:</span>
+        <span class="n">i</span><span class="o">--</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span> <span class="o">&gt;</span> <span class="n">end</span><span class="p">)</span> <span class="p">{</span>
+          <span class="n">text</span> <span class="o">=</span> <span class="k">new</span> <span class="n">byte</span><span class="p">[</span><span class="n">end</span> <span class="o">-</span> <span class="n">begin</span><span class="p">];</span>
+          <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">end</span> <span class="o">-</span> <span class="n">begin</span><span class="p">;</span> <span class="n">t</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">text</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">t</span><span class="p">];</span>
+          <span class="p">}</span>
+          <span class="n">ansData</span><span class="p">.</span><span class="n">push_back</span><span class="p">({</span><span class="s">""</span><span class="p">,</span> <span class="n">end</span> <span class="o">-</span> <span class="n">begin</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">type</span><span class="p">});</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="n">text</span> <span class="o">=</span> <span class="k">new</span> <span class="n">byte</span><span class="p">[</span><span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">];</span>
+          <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">;</span> <span class="n">t</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">text</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">t</span><span class="p">];</span>
+          <span class="p">}</span>
+          <span class="n">ansData</span><span class="p">.</span><span class="n">push_back</span><span class="p">({</span><span class="s">""</span><span class="p">,</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">type</span><span class="p">});</span>
+        <span class="p">}</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">end</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">i</span> <span class="o">+=</span> <span class="n">lens</span><span class="p">.</span><span class="n">len</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="显示数据">显示数据</h3>
+
+<p>我们把一些证书用到的OID存储到MAP中，然后显示出其数据的表示的意义</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">printTime</span><span class="p">(</span><span class="n">string</span> <span class="n">timeStr</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"20"</span> <span class="o">&lt;&lt;</span> <span class="n">timeStr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="n">timeStr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="s">"年"</span><span class="p">;</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">timeStr</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="n">timeStr</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="s">"月"</span><span class="p">;</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">timeStr</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="n">timeStr</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="s">"日"</span><span class="p">;</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">timeStr</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="n">timeStr</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="s">":"</span><span class="p">;</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">timeStr</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="n">timeStr</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="s">":"</span><span class="p">;</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">timeStr</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="n">timeStr</span><span class="p">[</span><span class="mi">11</span><span class="p">];</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">printHex</span><span class="p">(</span><span class="n">byte</span><span class="o">*</span> <span class="n">data</span><span class="p">,</span> <span class="kt">int</span> <span class="n">len</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">hex</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">len</span><span class="p">;</span> <span class="n">t</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="p">((</span><span class="n">data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0xf0</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">4</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0xf</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">dec</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">printHexLimit</span><span class="p">(</span><span class="n">byte</span><span class="o">*</span> <span class="n">data</span><span class="p">,</span> <span class="kt">int</span> <span class="n">len</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">hex</span><span class="p">;</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">len</span><span class="p">;</span> <span class="n">t</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="p">((</span><span class="n">data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0xf0</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">4</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mh">0xf</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">t</span> <span class="o">%</span> <span class="mi">30</span> <span class="o">==</span> <span class="mi">29</span><span class="p">)</span> <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">dec</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">printRes</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="n">string</span><span class="o">&gt;</span> <span class="n">titleToString</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="p">{</span><span class="s">"1.3.6.1.5.5.7.3.1"</span><span class="p">,</span> <span class="s">"服务器身份验证(id_kp_serverAuth): True"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.3.6.1.5.5.7.3.2"</span><span class="p">,</span> <span class="s">"客户端身份验证(id_kp_clientAuth): True"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.29.37"</span><span class="p">,</span> <span class="s">"扩展密钥用法(Extended key usage):"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.29.31"</span><span class="p">,</span> <span class="s">"CRL Distribution Points:"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.2.840.10045.2.1"</span><span class="p">,</span> <span class="s">"EC Public Key:"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"Extension"</span><span class="p">,</span> <span class="s">"扩展字段:"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.23.140.1.2.2"</span><span class="p">,</span><span class="s">"组织验证(organization-validated):"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.3.6.1.5.5.7.1.1"</span><span class="p">,</span> <span class="s">"AuthorityInfoAccess:"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.29.19"</span><span class="p">,</span> <span class="s">"基本约束(Basic Constraints):"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.3.6.1.5.5.7.3.2"</span><span class="p">,</span> <span class="s">"客户端身份验证(id_kp_clientAuth): True"</span><span class="p">}};</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="n">string</span><span class="o">&gt;</span> <span class="n">titleToHex</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="p">{</span><span class="s">"1.2.840.10045.3.1.7"</span><span class="p">,</span>
+       <span class="s">"推荐椭圆曲线域(SEC 2 recommended elliptic curve domain): </span><span class="se">\n</span><span class="s">"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.29.35"</span><span class="p">,</span> <span class="s">"授权密钥标识符(Authority Key Identifier): "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.29.14"</span><span class="p">,</span> <span class="s">"主体密钥标识符(Subject Key Identifier): "</span><span class="p">}};</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="n">string</span><span class="o">&gt;</span> <span class="n">titleToNext</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="p">{</span><span class="s">"1.3.6.1.5.5.7.2.1"</span><span class="p">,</span> <span class="s">"OID for CPS qualifier: "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.3.6.1.5.5.7.48.1"</span><span class="p">,</span> <span class="s">"OCSP: "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.3.6.1.5.5.7.48.2"</span><span class="p">,</span> <span class="s">"id-ad-caIssuers: "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.3.6.1.4.1.311.60.2.1.1"</span><span class="p">,</span> <span class="s">"所在地(Locality): "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.3.6.1.4.1.311.60.2.1.3"</span><span class="p">,</span> <span class="s">"国家(Country): "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.3.6.1.4.1.311.60.2.1.2"</span><span class="p">,</span> <span class="s">"州或省(State or province): "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.4.3"</span><span class="p">,</span> <span class="s">"通用名称(id-at-commonName): "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.4.5"</span><span class="p">,</span> <span class="s">"颁发者序列号(id-at-serialNumber): "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.4.6"</span><span class="p">,</span> <span class="s">"颁发者国家名(id-at-countryName): "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.4.7"</span><span class="p">,</span> <span class="s">"颁发者位置名(id-at-localityName): "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.4.8"</span><span class="p">,</span> <span class="s">"颁发者州省名(id-at-stateOrProvinceName): "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.4.9"</span><span class="p">,</span> <span class="s">"颁发者街区地址(id-at-streetAddress): "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.4.10"</span><span class="p">,</span> <span class="s">"颁发者组织名(id-at-organizationName): "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.4.11"</span><span class="p">,</span> <span class="s">"颁发者组织单位名(id-at-organizationalUnitName): "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.4.12"</span><span class="p">,</span> <span class="s">"颁发者标题(id-at-title): "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.4.13"</span><span class="p">,</span> <span class="s">"颁发者描述(id-at-description): "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.4.15"</span><span class="p">,</span> <span class="s">"颁发者业务类别(id-at-businessCategory): "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.29.32"</span><span class="p">,</span> <span class="s">"证书策略(Certificate Policies): "</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"2.5.29.15"</span><span class="p">,</span> <span class="s">"使用密钥(Key Usage): "</span><span class="p">}};</span>
+
+    <span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="p">,</span> <span class="n">string</span><span class="o">&gt;</span> <span class="n">algorithmObject</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="p">{</span><span class="s">"1.2.840.10040.4.1"</span><span class="p">,</span> <span class="s">"DSA"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.2.840.10040.4.3"</span> <span class="p">,</span> <span class="s">"sha1DSA"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.2.840.113549.1.1.1"</span> <span class="p">,</span><span class="s">"RSA"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.2.840.113549.1.1.2"</span> <span class="p">,</span> <span class="s">"md2RSA"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.2.840.113549.1.1.3"</span> <span class="p">,</span> <span class="s">"md4RSA"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.2.840.113549.1.1.4"</span> <span class="p">,</span> <span class="s">"md5RSA"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.2.840.113549.1.1.5"</span> <span class="p">,</span> <span class="s">"sha1RSA"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.3.14.3.2.29"</span><span class="p">,</span> <span class="s">"sha1RSA"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.2.840.113549.1.1.13"</span><span class="p">,</span> <span class="s">"sha512RSA"</span><span class="p">},</span>
+      <span class="p">{</span><span class="s">"1.2.840.113549.1.1.11"</span><span class="p">,</span><span class="s">"sha256RSA"</span><span class="p">}};</span>
+
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">ansData</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">Item</span> <span class="n">item</span> <span class="o">=</span> <span class="n">ansData</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">strcmp</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="s">"Version"</span><span class="p">))</span> <span class="p">{</span>
+      <span class="n">item</span> <span class="o">=</span> <span class="n">ansData</span><span class="p">[</span><span class="o">++</span><span class="n">i</span><span class="p">];</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">type</span> <span class="o">==</span> <span class="mh">0x02</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"证书版本: "</span><span class="p">;</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"V"</span> <span class="o">&lt;&lt;</span> <span class="n">item</span><span class="p">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">ansData</span><span class="p">[</span><span class="o">++</span><span class="n">i</span><span class="p">];</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"序列号: "</span><span class="p">;</span>
+        <span class="n">printHex</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">item</span><span class="p">.</span><span class="n">len</span><span class="p">);</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">i</span><span class="o">--</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">titleToString</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">)</span> <span class="o">!=</span> <span class="n">titleToString</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">titleToString</span><span class="p">[</span><span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">titleToHex</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">)</span> <span class="o">!=</span> <span class="n">titleToHex</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+      <span class="n">string</span> <span class="n">title</span> <span class="o">=</span> <span class="n">titleToHex</span><span class="p">[</span><span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">];</span>
+      <span class="n">item</span> <span class="o">=</span> <span class="n">ansData</span><span class="p">[</span><span class="o">++</span><span class="n">i</span><span class="p">];</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">data</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">title</span><span class="p">;</span>
+        <span class="n">printHex</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">item</span><span class="p">.</span><span class="n">len</span><span class="p">);</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">i</span><span class="o">--</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">titleToNext</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">)</span> <span class="o">!=</span> <span class="n">titleToNext</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">titleToNext</span><span class="p">[</span><span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">];</span>
+      <span class="n">item</span> <span class="o">=</span> <span class="n">ansData</span><span class="p">[</span><span class="o">++</span><span class="n">i</span><span class="p">];</span>
+      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">item</span><span class="p">.</span><span class="n">title</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">algorithmObject</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">)</span> <span class="o">!=</span> <span class="n">algorithmObject</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"加密算法: "</span> <span class="o">&lt;&lt;</span> <span class="n">algorithmObject</span><span class="p">[</span><span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">];</span>
+      <span class="n">item</span> <span class="o">=</span> <span class="n">ansData</span><span class="p">[</span><span class="o">++</span><span class="n">i</span><span class="p">];</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">type</span> <span class="o">==</span> <span class="mh">0x03</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"</span><span class="se">\n</span><span class="s">公钥："</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+        <span class="n">printHexLimit</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">item</span><span class="p">.</span><span class="n">len</span><span class="p">);</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">i</span><span class="o">--</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="o">!</span><span class="n">strcmp</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="s">"0x00"</span><span class="p">))</span> <span class="p">{</span>
+      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"Public Key: "</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+      <span class="n">printHexLimit</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">data</span><span class="p">,</span> <span class="n">item</span><span class="p">.</span><span class="n">len</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="o">!</span><span class="n">strcmp</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="s">"2.5.29.17"</span><span class="p">))</span> <span class="p">{</span>
+      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"主体别名(Subject Alternative Name): "</span><span class="p">;</span>
+      <span class="n">item</span> <span class="o">=</span> <span class="n">ansData</span><span class="p">[</span><span class="o">++</span><span class="n">i</span><span class="p">];</span>
+      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">;</span>
+      <span class="n">item</span> <span class="o">=</span> <span class="n">ansData</span><span class="p">[</span><span class="o">++</span><span class="n">i</span><span class="p">];</span>
+      <span class="k">while</span> <span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">type</span> <span class="o">==</span> <span class="mh">0x82</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">", "</span> <span class="o">&lt;&lt;</span> <span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">;</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">ansData</span><span class="p">[</span><span class="o">++</span><span class="n">i</span><span class="p">];</span>
+      <span class="p">}</span>
+      <span class="n">i</span><span class="o">--</span><span class="p">;</span>
+      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">.</span><span class="n">length</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">7</span> <span class="o">&amp;&amp;</span>
+               <span class="o">!</span><span class="n">strcmp</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">.</span><span class="n">substr</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">7</span><span class="p">).</span><span class="n">c_str</span><span class="p">(),</span> <span class="s">"UTCTime"</span><span class="p">))</span> <span class="p">{</span>
+      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">"有效期: "</span><span class="p">;</span>
+      <span class="n">string</span> <span class="n">beginTime</span> <span class="o">=</span> <span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">.</span><span class="n">substr</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">.</span><span class="n">length</span><span class="p">()</span> <span class="o">-</span> <span class="mi">8</span><span class="p">);</span>
+      <span class="n">printTime</span><span class="p">(</span><span class="n">beginTime</span><span class="p">);</span>
+      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">" - "</span><span class="p">;</span>
+      <span class="n">item</span> <span class="o">=</span> <span class="n">ansData</span><span class="p">[</span><span class="o">++</span><span class="n">i</span><span class="p">];</span>
+      <span class="n">string</span> <span class="n">endTime</span> <span class="o">=</span> <span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">.</span><span class="n">substr</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">item</span><span class="p">.</span><span class="n">title</span><span class="p">.</span><span class="n">length</span><span class="p">()</span> <span class="o">-</span> <span class="mi">8</span><span class="p">);</span>
+      <span class="n">printTime</span><span class="p">(</span><span class="n">endTime</span><span class="p">);</span>
+      <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>
