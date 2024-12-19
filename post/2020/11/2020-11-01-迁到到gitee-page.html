@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>迁到到gitee page</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>迁到到gitee page</h2><time datetime="2020-11-01 19:31:25 +0800">2020/11/01 Sun</time> &nbsp; &nbsp;<a href="/tags/流水账.html" class="tag"><text><nobr>#流水账</nobr></text>&nbsp;</a><article><hr />
+<h2 id="迁移到gitee-加快访问"><del>迁移到gitee ,加快访问</del></h2>
+<p>github page 
+now.sh 这个国外的服务还是太慢了,作为博客还是不怎么方便,
+决定把pages迁移到国内的gitee,工信部官方指定平台.服务的稳定性应该没什么问题.
+但我依然决定把github作为备用的地址.</p>
+
+<p>gitee也支持 azure devops.这个也给上面的要求给了很好的解决方式.</p>
+<ol>
+  <li>本地只用push 到gitee. 触发 azure ci, 然后同步push到github.</li>
+  <li>同步到github会触发现在的 azure ci,分别编译 github page 和 gitee page 并发布
+    <blockquote>
+      <p>为什么不在 1 里面编译?<br />
+因为我现在直接就是 在github触发的ci.利用现有的配置,只用很小的改动,就OK了
+ 把不同config mv 到根目录分别编译发布就ok了
+ 注意评论都是用的gitalk. gitalk 需要设置oauth app,两个page 用同一个github的repo 的issue作为评论
+但是 oauth需要不同的回调url.所以得设置两个 app.在配置不同的id 就行</p>
+    </blockquote>
+  </li>
+</ol>
+
+<h2 id="坑gitee-page-免费版不能自动部署">坑,gitee page 免费版不能自动部署</h2>
+<p>github 只用push html 到对应的master 分支,就会主动部署,
+目前gitee 只有付费用户(或者repo受到推荐的用户)能自动部署。
+目前手动部署一次,抓取浏览器链接的 copy as curl. 在azure devops 的发布脚本执行后,再执行一次
+curl 就行,有转义的问题可以先把脚本 base64 一下.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>echo base64Shell | base64 -d | bash
+</code></pre></div></div>
+
+<p>目前使用起来还没什么问题,可能cookie会过期,或者</p>
+
+<h2 id="后续">后续</h2>
+<p>无故被封,放弃了</p>
+
+<hr />
+
+<h2 id="2022-5-23-再续">2022-5-23 再续</h2>
+<p>gitee 现在开源仓库需要提交审核。</p>
+
+<p>我估计他们也不想这么操作，应该是监管要求的吧。</p>
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

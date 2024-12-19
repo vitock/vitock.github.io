@@ -1,0 +1,27 @@
+keypair A {
+  private: 338741,
+  public: { x: 1237765, y: 721891 },
+  curve: { P: 1271293, Order: 423013, G: { x: 336180, y: 636912 } }
+}
+keypair B {
+  private: 270816,
+  public: { x: 541275, y: 574997 },
+  curve: { P: 1271293, Order: 423013, G: { x: 336180, y: 636912 } }
+}
+ECDH of A { x: 145062, y: 1113104 }
+ECDH of B { x: 145062, y: 1113104 }
+ECDH A == B ? true
+
+
+-----------Sign-------
+msg to be sign: 257748
+sign with key A.private result [ 120209, 278454 ]
+verify with A.public: ✅
+verify with B.public: ❌
+
+
+--------------Encryption (Menezes-Vanstone)--------
+message : 90572
+encrypt (by A.public): [ { x: 995290, y: 1257659 }, 129839, 955553 ]
+decrypt (by A.private) 90572 ✅
+decrypt (by B.private) 3740080411 ❌
