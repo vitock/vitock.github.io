@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>使用Jekyll构建txt风格博客</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>使用Jekyll构建txt风格博客</h2><time datetime="2022-05-14 10:00:46 +0800">2022/05/14 Sat</time> &nbsp; &nbsp;<a href="/tags/流水账.html" class="tag"><text><nobr>#流水账</nobr></text>&nbsp;</a><article><h1 id="为什么">为什么?</h1>
+<p>本来用的Hexo NexT主题，
+网上冲浪的时候，看到一个主题 <a href="https://riggraz.dev/no-style-please/">no-style-please</a></p>
+
+<p>Nice! 没有过多的样式，给人一种返璞归真的美感。
+以前，东西没写多少，反而折腾了好些此博客，实在是有些本末倒置了。</p>
+
+<p>打开github，发现是 Jekyll 版本的，看了下issue，有人问能不能迁移到Hexo，但是
+很久也没收到回复，看来作者没关注这个repo了 :(</p>
+
+<p>好吧，自己动手，也是一个学习的过程，简单记录下。</p>
+
+<h1 id="开始迁移">开始迁移</h1>
+<p>于是,开始迁移工作,
+按照 <a href="https://github.com/riggraz/no-style-please">repo</a> 一顿操作，发现一些功能还是不能满足需求。
+设计简洁，但功能不能简陋啊</p>
+<ul>
+  <li>没有tag，这样查找博客不方便</li>
+  <li>站内链接索引</li>
+  <li>不能加密博客。<br />
+有些内容当做日记记录的，不想直接po到网上，不想被搜索引擎索引</li>
+  <li>原来的图片导入不能正常工作</li>
+  <li>公式不能正常显示</li>
+</ul>
+
+<p>自己弄吧，ruby还没写过，正好试试。</p>
+
+<h1 id="自定义插件">自定义插件</h1>
+<p>缺失的功能都通过Jekyll插件来实现</p>
+<h2 id="tags">tags</h2>
+<p>通过liquid tag功能,在 _layouts/post.html模板文件中添加代码显示tag，
+  但是这样要求每次新建tag时候还得新建一个tag.md 文件，比较麻烦</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+{% capture tag_name %}{{ tag }}{% endcapture %}
+  &lt;a href="/tags/{{ tag_name }}"&gt;&lt;text&gt;&lt;nobr&gt;#{{ tag_name }}&lt;/nobr&gt;&lt;/text&gt;&amp;nbsp;&lt;/a&gt;
+    {% endfor %}&lt;/span&gt;
+
+</code></pre></div></div>
+<p>为了避免手动创建tag.md
+新增一个Generator插件,显示的时候自动检查tag有没被创建,根据需要创建tags</p>
+
+<h2 id="asset_img--公式显示">asset_img &amp; 公式显示</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+/// 直接展示图片
+{% asset_img img.png imgWidthNumber %}
+
+/// 图片链接
+{% img_link titile img.png%}
+
+</code></pre></div></div>
+
+<h2 id="插件代码">插件代码</h2>
+<p><a href="https://github.com/vitock/no-style-please2-plugins">no-style-please2-plugins</a></p>
+<h2 id="内部链接">内部链接</h2>
+<p>这个比较费劲了些,如果修改post编译顺序,似乎代码要求改动比较大,需要非常熟悉jekyll源码,
+还有交叉引用比较难以处理。<br />
+最后编译两次，第一次获取每个post路径，第二次真实的写入链接。
+如何重新触发编译，这个也是在Jekyll源代码里面翻了几次才找到，</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>site.process // 触发编译
+
+{% post_link 另一篇文章标题 %}
+
+</code></pre></div></div>
+
+<h2 id="博客加密">博客加密</h2>
+<p>这个也是主要原因，大概就是加密html
+为了安全起见，实现了以下功能：</p>
+<ul>
+  <li>支持文章自定义key,在FrontMatter(就是markdown文件开头) 加入key</li>
+  <li>支持在_config.yml 中根据tag设置key</li>
+</ul>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">enc_tags</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="na">tag</span><span class="pi">:</span> <span class="s">ZZ</span>
+     <span class="na">password</span><span class="pi">:</span> <span class="s1">'</span><span class="s">1'</span>
+    <span class="pi">-</span> <span class="na">tag</span><span class="pi">:</span> <span class="s">Z2</span>
+      <span class="na">password</span><span class="pi">:</span> <span class="s1">'</span><span class="s">2'</span>
+    <span class="pi">-</span> <span class="na">tag</span><span class="pi">:</span> <span class="s">TestEnc</span>
+      <span class="na">password</span><span class="pi">:</span> <span class="s">AwAIACAAIQAbXSqib4KMwu4fgXtgXOxm+/hj6zNTpHkqOUqVtmxr9pk0AKLKWOvUAjSUyelT4QHmsjQHqbW+ibwIWU6VabD3MElf8zdolGheKUSs</span>
+    <span class="pi">-</span> <span class="na">tag</span><span class="pi">:</span> <span class="s">TestEnc2</span>
+      <span class="na">password</span><span class="pi">:</span> <span class="s">AwAIACAAIQC6gndrmOm97/UITza0u77pcH5JuN36PYD3hihoWbKXIAg7qqahtCiqAxsyXZWbawPlk3HrtHfWL++OlP2c3b2HhEV6fkFgHGYtwXyy3XWu</span>
+    
+</code></pre></div></div>
+
+<p>key 可以直接写成明文,但是<strong>强烈不建议</strong>这么干。敏感信息不要放在代码里面
+可以使用ECC加密<br />
+所以写了个<a href="https://github.com/vitock/ltec_rb">ltec</a> 的 gem 包,用来实现ECC加解密。
+build 之前 <code class="language-plaintext highlighter-rouge">JEKYLL_EC_PRIVATEKEY</code>设置到环境里面</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"export set JEKYLL_EC_PRIVATEKEY=xxxxxxxxxxxxx"
+</code></pre></div></div>
+
+<p>有空弄个研究下发布个主题repo详解吧</p>
+
+<hr />
+<p>写了个<a href="https://github.com/vitock/jekyll-zeta">jekyll主题</a></p>
+
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

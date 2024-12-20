@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>最近的事</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>最近的事</h2><time datetime="2023-01-17 15:37:15 +0800">2023/01/17 Tue</time> &nbsp; &nbsp;<a href="/tags/流水账.html" class="tag"><text><nobr>#流水账</nobr></text>&nbsp;</a><a href="/tags/日常.html" class="tag"><text><nobr>#日常</nobr></text>&nbsp;</a><a href="/tags/秘.html" class="tag"><text><nobr>#秘</nobr></text>&nbsp;</a><article>
+<div id="encrypted">
+    <h3> 🔒 文章内容已经被加密:) </h3>
+   
+    <input style="width:100%; " type="password" id="passwordinput" placeholder="输入密码"></input>
+    <p>
+        <input type="button" value= "解密" id="DecryptBtn"/>
+        <input type="button" value= "清空密码缓存" id="ClearBtn1"/>
+    
+    </div>
+    
+    <div id="decrypted"  style = "display:none">
+        <p>
+        <div>
+           
+            <input type="button" value= "重新加密" id="EncryptBtn"/>
+
+            <input type="button" value= "清空密码缓存" id="ClearBtn2"/>
+           
+        </div>
+        <div id = 'decryptContent'>
+        </div>
+    </div>
+    <script>
+        var exports = exports || {} 
+    </script>
+    <script src="//cdn.jsdelivr.net/gh/vitock/jsdelivr@0.1.2/js/base64js.js"></script>
+    <script>
+        !function(){
+
+            const substl = crypto.subtle
+            const preFix = '1014d63b3a2022013563f032cdf6bba2c';
+            const encid = preFix
+            const encryptedContent = 'E1.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'
+            const base64str = encryptedContent.substring(3)
+            const bfMsg = base64js.decode(base64str)
+            const bfIv = bfMsg.subarray(0,12)
+            const bfCipher = bfMsg.subarray(12)
+            
+            async function genKey(psw){
+                var keyRaw = new TextEncoder().encode(psw)
+                var key = await substl.importKey('raw',keyRaw,'PBKDF2',false,["deriveBits"])
+                const salt = 'this is a salt string 20221019'
+                let pbkdf2  = {
+                    name:"PBKDF2",hash: "SHA-256",iterations: 12345,salt: new TextEncoder().encode(salt)
+                }
+                return  await substl.deriveBits(pbkdf2,key,256);
+            }
+
+
+ 
+        async function decrypt (key0,isCached){
+            // const key = Uint8Array([...]); // 32 bytes key
+            
+            var key  = ''
+            if(isCached){
+                key = readKey()
+            }
+            else{
+                var keyS = preFix + key0 +  preFix
+                key = await genKey(keyS)
+            }
+            if (key.length == 0) {
+                return
+            }
+
+            var aeskey = {
+                name:"AES-GCM",
+                length:256
+            }
+            var keyObj = await substl.importKey('raw',key,aeskey,false,['decrypt'])
+            var aesDec= {name: "AES-GCM",iv:bfIv,tagLength:128}
+            try {
+                var bfDec  = await substl.decrypt(aesDec,keyObj,bfCipher)
+                var plain = new TextDecoder().decode(bfDec);
+                setKey(key)
+                document.getElementById("encrypted").style.display = 'none'
+                // / show decrypted 
+    
+                document.getElementById("decrypted").style.display = 'block'
+                document.getElementById("decryptContent").innerHTML = plain
+    
+                setTimeout(function(){
+                    var loadevent = document.createEvent("Event")
+                    loadevent.initEvent("load", true, true)
+    
+                    var DOMContentLoaded_event = document.createEvent("Event")
+                    DOMContentLoaded_event.initEvent("DOMContentLoaded", true, true)
+    
+                    window.dispatchEvent(loadevent)
+                    window.dispatchEvent(DOMContentLoaded_event)
+    
+                }, 500);
+            } catch (error) {
+                alert("wrong password.")
+            }
+        }
+        
+        document.getElementById("DecryptBtn").onclick = function(){
+            var key = document.getElementById("passwordinput").value
+            decrypt(key);        
+        }
+    
+        document.getElementById("EncryptBtn").onclick = function(){
+            /// hide input
+            document.getElementById("encrypted").style.display = 'block'
+            // / show decrypted 
+            document.getElementById("decrypted").style.display = "none"
+    
+            clearKey()
+        }
+
+        document.getElementById("EncryptBtn").onclick = function(){
+            /// hide input
+            document.getElementById("encrypted").style.display = 'block'
+            // / show decrypted 
+            document.getElementById("decrypted").style.display = "none"
+    
+            clearKey()
+        }
+
+        document.getElementById("ClearBtn1").onclick = function(){
+            localStorage.clear();
+        }
+        document.getElementById("ClearBtn2").onclick = function(){
+            localStorage.clear();
+        }
+            function readKey(){
+                var key = encid;
+                var v = localStorage.getItem(key)
+                if (v) {
+                    return base64js.decode(v)
+                }else{
+                    return null
+                }
+            }
+            function setKey(value){
+                var key = encid
+                var arr = new Uint8Array(value)
+                var b64 = base64js.encode(arr)
+                return localStorage.setItem(key,b64)
+            }
+            function clearKey() {
+                var key = encid
+                localStorage.removeItem(key)
+            }
+            var cachekey = readKey()
+            if(cachekey){
+                decrypt(cachekey,true)
+            }
+    }()
+    
+    </script>
+    </article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>
