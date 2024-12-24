@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><script type="text/x-mathjax-config">MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});</script>
+  <script type="text/javascript" async src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><title>RSA</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>RSA</h2><time datetime="2021-08-02 20:11:46 +0800">2021/08/02 Mon</time> &nbsp; &nbsp;<a href="/tags/加密.html" class="tag"><text><nobr>#加密</nobr></text>&nbsp;</a><a href="/tags/RSA.html" class="tag"><text><nobr>#RSA</nobr></text>&nbsp;</a><a href="/tags/模逆元.html" class="tag"><text><nobr>#模逆元</nobr></text>&nbsp;</a><a href="/tags/素数.html" class="tag"><text><nobr>#素数</nobr></text>&nbsp;</a><article><h2 id="rsa-的加密">RSA 的加密。</h2>
+
+<ol>
+  <li>随机选取两个素数 $p\ne q$ , $n = p \times q$ <br />
+  欧拉函数$f =  \phi(n) = (p-1) \times (q-1)$
+    <blockquote>
+      <p>如果 $p,q$相等,那么,欧拉函数 $f = p (p-1)$ ,而$PQ$相等的话直接开方$N$就能获取$p,q$。所以这里，规定$p,q$不相等</p>
+    </blockquote>
+  </li>
+  <li>选取一数$e$,使得 $e，f$ 互质
+ 找到 一个数 $d \times e = 1 \pmod{f}$
+    <blockquote>
+      <p>e f 互质,那么 d 一定存在。可以根据扩展欧几里得算法,快速求得 $e$的模逆元$d$;</p>
+    </blockquote>
+  </li>
+  <li>将$(e,n)$作为公钥 ,$(d,n)$作为私钥
+    <blockquote>
+      <p>RSA 公钥私钥是对称的. 可以互换。实践中，e 会很小,可以选3, 65537($2^{2^4} + 1$  ) ，方便加密
+欧拉定理,如果 $a$ $n$ 互素,那么下式子成立。
+其中$\phi(n)$表示 小于n的,与n互素的数的个数。
+欧拉函数的性质</p>
+    </blockquote>
+  </li>
+  <li>如果 n 为素数 $\phi(n) = n-1$</li>
+  <li>$m n$互质,那么 $\phi(m \times n ) = \phi(m ) \times \phi(n )$ 
+将m的 互质的每个数乘以n 的互质的数每个数,新得到的肯定也是互质的。</li>
+  <li>如果 $n = p^k$ 那么 $\phi(n) =  p^k - p^{k-1}$<br />
+因为去掉$p$的倍数的数,剩下的是和$n$互质的素,倍数个数为 $p^{k-1}$
+\(a ^{\phi(n)}  =  1 \pmod{n}\)
+当$n$是一个素数p的时候,$\phi(p) = p-1$,上面式子退化成费马小定理。
+\(a ^{p-1}  =  1 \pmod{p}\)</li>
+</ol>
+
+<h2 id="加密">加密</h2>
+
+<p>加密过程
+消息为 $m$加密  ($m &lt; n$)
+\(E = m ^e \pmod{n}\)</p>
+
+<p>解密 
+\(M = E ^d \pmod{n}\)</p>
+
+<h2 id="原理证明">原理证明</h2>
+<p>这里需要分类讨论</p>
+<h3 id="1-m-与n-互质的情况">1. m 与n 互质的情况</h3>
+<p>m n 互质,直接欧拉定理即可</p>
+
+\[\begin{aligned}
+M &amp;= E ^ e \pmod{n} \\
+  &amp;= m ^{e \times d} \pmod{n}  \\
+  &amp;= m ^{k\times \phi(n) + 1}  \pmod{n} \\
+  &amp; = ((m ^{\phi(n)})^k  ) \times m  \pmod{n} \\
+  &amp; = 1^{k} * m   \quad \pmod{n} \\
+  &amp; = m 
+\end{aligned}\]
+
+<h3 id="2-m-与n-不互质">2. m 与n 不互质</h3>
+
+<p>那么 m 肯定 $m = k \times p$  (这里 $m &lt; n$)
+  m 和 q肯定互质,</p>
+
+<p>根据费马小定理 $m^{q-1} = 1 \pmod{q}$ (q 是素数)</p>
+
+<p>继而 
+  \(m ^{q-1} = 1 \pmod{q}\)</p>
+
+<p>$ed =  k_1(q-1)(p-1) + 1$<br />
+  这里构造 $k_1(q-1)(p-1)$ ,两边同时 $k1(p-1)$ 次幂</p>
+
+\[m ^{k_1(q-1)(p-1)} = 1 \pmod{q}\]
+
+\[m ^{ed -1} = 1 \pmod{q} \\
+    \Downarrow \\
+    m ^{ed - 1} = k_2q + 1  \quad (\pmod{n})  \\
+    m^{ed} = k_2 q m + m  \quad (\pmod{n}) \\ 
+    \Downarrow \\
+   m ^{ed} \pmod{n} = (m + k_2  q m ) \quad (\pmod{n})  \\
+   \\
+   \begin{cases}
+  m = kp \\   
+   n = pq \\
+   \end{cases}\\
+   \Downarrow\\
+  \begin{aligned} \\
+  m ^{ed} &amp;= m + k_2 q kp  \quad \pmod{n}  \\  
+          &amp;= m 
+  \end{aligned}\]
+
+<blockquote>
+  <p>在 $m^{ed - 1} = 1 \pmod{q}$ 直接展开</p>
+</blockquote>
+
+<p>这样, m 与 n 不互质的情况下, $m^{ed} = m \pmod{n}$ ,RSA算法也能正常工作。</p>
+
+<p>注,这里私钥e和公钥d</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>例子，取两个素数， 5 和 11 ，计算  
+n = 5 * 11 = 55$
+y(n)= (5-1)(11 -1) =  40
+
+随机取一数,私钥 e = 3 
+根据 ed   = 1 mod n  得到
+d = 27
+
+已知消息为 7 , 
+
+加密: 7 ^ 3 mod  55 = 13
+
+13 ^ 27 = ((13 )^ 3 ) ^ 9 = (52 ^ 3) ^ 3 = 28 ^ 3 = 7 mod 55
+
+消息为 22
+加密:22 ^ 3 = 33 mod 55
+
+解密:33 ^ 3 ^ 3 ^ 3 = 22 ^ 3 ^ 3 = 33 ^ 3 = 22
+
+</code></pre></div></div>
+
+<p>一个简单的js实现(原理展示)<br />
+isPrime exGcd 从后面文章中代码略做修改,改用bigInt，</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>const isPrime = require('./miller-rabin.js')
+const exGcd = require('./exGcd.js')
+function genRsaKeyPair() {
+    var P = 0, Q = 0, N = 0, E = 65537n, D = 0;
+    while (1) {
+        if (P != 0 &amp;&amp; Q != 0) {
+            break;
+        }
+        var tmpPrime = Math.round(Math.random() * (1e10));
+        if (!isPrime(tmpPrime)) {
+            continue;
+        }
+        if (P == 0) {
+            P = BigInt(tmpPrime);
+            continue;
+        }
+        if (Q == 0 &amp;&amp; tmpPrime != P) {
+            Q = BigInt(tmpPrime);
+            continue;
+        }
+    }
+    N = P * Q;
+    // P != Q  ,if P == Q YN = P(P-1)
+    var YN = (P - 1n) * (Q - 1n);
+    console.log('P,Q,N,Yn:', P, Q, N, YN);
+    D = exGcd(E, YN);
+    /// E D not co-prime ,rechoose P Q 
+    if (D == 0) {
+        return genRsaKeyPair();
+    }
+    // public key = E,N  private key D,N
+    return {
+        public: [E, N],
+        private: [D, N]
+    }
+}
+
+function encyrptWithRsaKey(msg, key) {
+    msg = BigInt(msg);
+    // a * b % n
+    function multify(a, b, n) {
+        return BigInt(a) * BigInt(b) % BigInt(n);
+    }
+    //  a ^ e  % n
+    function pow(a, e, n) {
+        if (e == 0) {
+            return 1n;
+        }
+        if (e == 1) {
+            return a % n;
+        }
+        var e0 = e % 2n;
+        var e1 = (e - e0) / 2n;
+        var m = pow(a, e1, n) % n
+        var k = pow(a, e0, n)
+        return multify(k, multify(m, m, n), n)
+
+    }
+    // var z = multify(1,43046721,73783487)
+    var z = pow(msg, key[0], key[1]);
+    return z;
+}
+do {
+    var kp2 = genRsaKeyPair();
+    console.log('RSA Key Pair:\n', kp2);
+
+    var N = kp2.public[1];
+    var E = kp2.public[0];
+    var D = kp2.private[0];
+
+    var z = Math.floor(Math.random() * Number(N));
+    var e2 = encyrptWithRsaKey(z, kp2.public);
+    var d2 = encyrptWithRsaKey(e2, kp2.private);
+    var Sign = encyrptWithRsaKey(z, kp2.private);
+    var Verify = encyrptWithRsaKey(Sign, kp2.public);
+    console.log(
+        `
+     E = ${E}  
+     D = ${D}  
+     N = ${N}
+     MSG = ${z};
+     Enc = ${z}  ^ ${E}  % N= ${e2};
+     Dec = ${e2}  ^ ${D}  % N  = ${d2};
+     Sign = ${z} ^ ${D} % N = ${Sign};
+     Verify = ${Sign} ^ ${E} % N = ${Verify};
+     Encrypt:${d2 == z ? 'Success ✅' : "Failed ❌"}: MSG ${d2 == z ? '=' : '≠'} Dec 
+     Sign:${Verify == z ? 'Success ✅' : "Failed ❌"}: MSG ${d2 == Verify ? '=' : '≠'} Verify 
+    `
+    )
+    if (d2 != z) {
+        break;
+    }
+} while (0)
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>P,Q,N,Yn: 1160459n 10499113n 12183790172867n 12183778513296n
+RSA Key Pair:
+ {
+  public: [ 65537n, 12183790172867n ],
+  private: [ 4078982626001n, 12183790172867n ]
+}
+
+     E = 65537  
+     D = 4078982626001  
+     N = 12183790172867
+     MSG = 6667895871202;
+
+     Enc = 6667895871202  ^ 65537  % N= 10904750447946;
+     Dec = 10904750447946  ^ 4078982626001  % N  = 6667895871202;
+
+     Sign = 6667895871202 ^ 4078982626001 % N = 6115510004251;
+     Verify = 6115510004251 ^ 65537 % N = 6667895871202;
+
+     Encrypt:Success ✅: MSG = Dec 
+     Sign:Success ✅: MSG = Verify 
+    
+
+</code></pre></div></div>
+
+<h2 id="一些问题">一些问题</h2>
+
+<p>实际实现中,消息$m$ 如果太小的话很容易被暴力破解,比如0 加密一直是0 ,1 加密一直是1。
+  为了防止这种情况，一般会对消息进行padding 处理，保证消息不会太小，同时，增加随机化处理，使得每次加密同样的报文得到的密文不一样。</p>
+
+<h2 id="to-be-contined-longrightarrow">To Be Contined $\longrightarrow$</h2>
+
+<blockquote>
+  <p>后面有空补充下,素数测试算法(Miller Rabin算法)。 
+扩展欧几里得算法求模逆元。(这个应该在写ECC时候就完善的)</p>
+</blockquote>
+
+<p><a href="/post/2021/08/2021-08-07-%E6%89%A9%E5%B1%95%E6%AC%A7%E5%87%A0%E9%87%8C%E5%BE%97%E7%AE%97%E6%B3%95">扩展欧几里得算法</a><br />
+<a href="/post/2021/08/2021-08-07-miller-rabin%E7%B4%A0%E6%95%B0%E6%B5%8B%E8%AF%95%E7%AE%97%E6%B3%95">Miller-Rabin素数测试算法</a></p>
+
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><script type="text/x-mathjax-config">MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});</script>
+  <script type="text/javascript" async src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><title>扩展欧几里得算法</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>扩展欧几里得算法</h2><time datetime="2021-08-07 17:23:34 +0800">2021/08/07 Sat</time> &nbsp; &nbsp;<a href="/tags/RSA.html" class="tag"><text><nobr>#RSA</nobr></text>&nbsp;</a><a href="/tags/ECC.html" class="tag"><text><nobr>#ECC</nobr></text>&nbsp;</a><a href="/tags/素数.html" class="tag"><text><nobr>#素数</nobr></text>&nbsp;</a><a href="/tags/模逆元.html" class="tag"><text><nobr>#模逆元</nobr></text>&nbsp;</a><article><p>前面的笔记中,ECDH,ECDSA, RSA等整数模素数的操作,都需要用到模逆元</p>
+
+<p>本文介绍
+扩展欧几里德算法快速求模逆元</p>
+
+\[e d = 1\pmod n\]
+
+<p><strong>裴蜀定理(贝祖等式):</strong></p>
+
+<p>若$a,b$是整数,且$gcd(a,b)=d$，那么对于任意的整数$x,y$,$ax+by$都一定是$d$的倍数，特别地， 
+一定存在整数$x,y$，使$ax+by=d$成立。</p>
+
+<p>推论:a ,b 互质的充要条件就是 $ax +by = 1$</p>
+
+<h2 id="欧几里得算法求最大公约数">欧几里得算法求最大公约数</h2>
+
+<p>$d$ 是 a,b 的最大公约数(Greatest Common Divisor )<br />
+由 $ax +by = kd$ 知道,我们通过选取不同x,y可以逐步让k小,一直到0,那么前一次 肯定就是$k = 1$,</p>
+
+<p>可以让大数减去小的,获得的差取代大数,然后在不停迭代。</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>例如 a = 78 = 3 * 13 * 2 ,b= 28 = 2 * 7 
+
+78 - 28 = 50 ,   a= 50 , b = 28
+50 - 28 = 22 ,   a = 22 ,b = 28
+28 - 22 = 6 ,    a = 28,b = 6
+28 - 6 * 4 = 4 ,  a = 4 ,b = 6  /// 这里连续减法,重复步骤直接用乘法
+6 - 4 = 2 ,       a = 2 ,b = 4  
+4 - 2 * 2 = 0   // 上一步的余数 2 就是最大公约数 
+</code></pre></div></div>
+
+<h2 id="扩展欧几里得算法">扩展欧几里得算法</h2>
+<p>由于a,b 互质.</p>
+
+<p>$ax + by = 1$<br />
+这里假定 $a &lt; b$</p>
+
+<p>我们正常欧几里得算法过程</p>
+
+<p>\(k_0 = a ,  
+ \\ - k_0x_1 + b = k_1    
+ \\ - k_1 x_2 + k_0 = k_2  
+ \\ - k_2 x_3 + k_1  = k_3  
+ \\ - k_3 x_4 + k_2 = k4     
+ \\ \vdots 
+ \\ - k_i x_{i+1} + k_{i-1} = k_{i+1} 
+\\ \quad k_i &lt; k_{i-1 } , x_{i+1} = \lfloor{k_{i+1}/k_{i}}\rfloor  
+\\ \vdots 
+\\ - k_n x_{n+1} + k_{n-1} = 1  ,这里可以终止,ab 互质,最大公约数一定是1\)
+构造 $ax + by = 1$</p>
+
+<h2 id="思路-1走不通"><del>思路 1(走不通)</del></h2>
+
+<p>注意到,倒数第1步中有$\dots =1$的等式,
+\(- k_n x_{n+1} + k_{n-1} = 1\)
+将$k_{n-1} = \dots$ 依次代入.
+很遗憾,这样会有另外一个常数,会得到 $ax + by + C = 1$ 形式的方程，这个不是我们想要的。</p>
+
+<h2 id="思路2">思路2</h2>
+
+<p>类似于求斐波那契数列构造</p>
+
+\[\begin{bmatrix}
+  F_n \\ 
+  F_{n-1}
+\end{bmatrix}
+= A \begin{bmatrix}
+  F_{n-1} \\ 
+  F_{n-2}
+\end{bmatrix}\]
+
+<p>由上面的递推公式，</p>
+
+\[\begin{bmatrix}
+k_{n} 
+\\ k_{n-1}
+\end{bmatrix}\]
+
+\[- k_{n-1} x_{n} + k_{n-2} = k_{n}\]
+
+\[\downarrow
+\\ \begin{bmatrix}
+k_{n} 
+\\ k_{n-1} 
+\end{bmatrix} = 
+\begin{bmatrix}
+-x_n &amp; 1 \\ 
+\\ 1 &amp; 0
+\end{bmatrix}
+\begin{bmatrix}
+  k_{n-1} \\
+  \\ k_{n-2}
+\end{bmatrix}\]
+
+<p>逐步展开,一直到 $b, a$ ,这里 $a = k_0$,$k_n = 1$ (互质,取到最大公约数)</p>
+
+\[\begin{bmatrix}
+  1
+  \\ k_n-1
+\end{bmatrix} 
+\begin{bmatrix}
+  k_n
+  \\ k_n-1
+\end{bmatrix}
+= \begin{bmatrix}
+-x_n &amp; 1\\
+ 1 &amp; 0
+\end{bmatrix}
+\begin{bmatrix}
+-x_{n-1} &amp; 1 \\
+1 &amp; 0
+\end{bmatrix}
+\dots 
+\begin{bmatrix}
+-x_{1} &amp; 1 \\
+1 &amp; 0
+\end{bmatrix}
+\begin{bmatrix}
+  a\\
+  b
+\end{bmatrix}\]
+
+<p>这样,我们迭代欧几里德算法时候,同步算出矩阵的乘积.</p>
+
+<p>到最后,矩阵的 $m_{11} = x$ 是模逆元,  $m_{12} = y$ 是方程的根,
+\(ax + by = 1\)
+$x 为 a 的模b 逆元$</p>
+
+<p>下面是一个demo代码. 参数内建都是Number类型,大小有限制,作为原理演示。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>function gcd(a,b,r0){
+    var r = b % a  ;
+    if (r == 0) {
+        return a;
+    }
+    return gcd(r,a);
+}
+
+
+
+function exGcd(a,b){
+
+    /**
+     * 2x2 矩阵,用数组表示
+     * @param {*} a 
+     * @param {*} b 
+     */
+    function matrixMultiply(A,B){
+
+
+        return [A[0] * B[0] + A[1] * B[2],A[0] * B[1] + A[1] * B[3],
+
+        A[2] * B[0] + A[3] * B[2] , A[2] * B[1] + A[3] * B[3]];
+    
+    }
+
+    function logN(a,msg){
+        console.log('' + msg,a.toString(16))
+    }
+    function _exGcd(a,b){
+         /**
+         *   | xn  1 |  ... | x1 1|  * | a |  =  | 1 |
+         *   | 1   0 |      | 1  0|    | b |  =  | k |
+         */
+        var s = b % a ;
+        var q = (b - s  ) /a ;
+
+        if(s == 1){ //终止
+            return  [-q,1n,   1n,0n]
+        }
+        else if(s == 0){
+
+            
+            /// error 不互质,除非 a == 1
+            return [0n,0n,0n,0n];
+        }
+
+        const matrix0 = [-q,1n ,1n,0n];
+        const matrix1 = _exGcd(s,a);
+        return matrixMultiply(matrix1,matrix0);
+    }
+ 
+    if(a &gt; b) {
+        a = a % b ;
+    }
+
+    /// 1 的逆元是本身
+    if (a == 1) {
+        return 1n;
+    }
+    // 0 无逆元
+    if (a == 0) {
+        return 0;
+    }
+    var m = _exGcd(a,b);
+
+    var r = (m[0] % b + b) % b
+    return r
+}
+
+
+// var b = 10;
+// for(var a = 1 ;a &lt; b ; ++ a ){
+//     var c = exGcd(a,b);
+//     if (c == 0 || c == 1) {
+//         // console.log('-----' ,a)
+//     }
+//     else if(a * c %b == 1){
+//         console.log(c , a   , ` ${c} * ${a} % ${b}  = ${a * c %b }`);
+//     }
+// }
+
+
+
+module.exports = exGcd
+
+</code></pre></div></div>
+
+<h1 id="二进制扩展欧几里得算法">二进制扩展欧几里得算法</h1>
+
+<p>这里还是用到了很多乘法，在数字很大情况下，效率低下。</p>
+
+<p><a href="/post/2022/05/2022-05-04-binary-extended-euclidean-algorithm">二进制扩展欧几里得算法(binary extended euclidean algorithm)</a></p>
+
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

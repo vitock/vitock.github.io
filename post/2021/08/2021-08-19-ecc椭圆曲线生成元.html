@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><script type="text/x-mathjax-config">MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});</script>
+  <script type="text/javascript" async src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><title>ECC生成元之 Schoof 算法</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>ECC生成元之 Schoof 算法</h2><time datetime="2021-08-19 22:07:16 +0800">2021/08/19 Thu</time> &nbsp; &nbsp;<a href="/tags/ECC.html" class="tag"><text><nobr>#ECC</nobr></text>&nbsp;</a><article><p>对于比特币使用的 secp256k1曲线</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>P = FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE FFFFFC2F
+G = 02 79BE667E F9DCBBAC 55A06295 CE870B07 029BFCDB 2DCE28D9 59F2815B 16F81798
+N = FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE BAAEDCE6 AF48A03B BFD25E8C D0364141
+</code></pre></div></div>
+<p>确定这些是参数,(有限域, 生成元,子群的阶) 比较难(数字太大)</p>
+
+<hr />
+<p>前面写到,<br />
+<a href="/post/2020/10/2020-10-21-ecc">ECC椭圆曲线加密</a></p>
+
+<h2 id="寻找g">寻找$G$</h2>
+
+<p>但是对于如何找到 生成元G,
+下面给出一个算法</p>
+<ol>
+  <li>确定有限域素数 p</li>
+  <li>根据 Schoof 算法,找到椭圆曲线上点的个数,即椭圆曲线对于的群的阶 n</li>
+  <li>由于 西罗定理
+    <blockquote>
+      <p>设G是以阶为$n = mp^{i}$的有限群，r&gt;=1，p是素数，（p,m）=1，对每个($0&lt;i&lt;=r$)，G中有
+$p^i$阶的子群，并且G中每个$p^i$阶的子群是某个$p^{i+1}$阶子群的正规子群。</p>
+    </blockquote>
+  </li>
+  <li>从1开始,设计一个最大陪集H个数 Hmax,分解${n},  得到一个子群G的阶。一般 Hmax 是 很小的数字 ，secp256k1 的曲线h=1;
+    <ul>
+      <li>如果找不到 h,和 Order,那么跳转到步骤1</li>
+    </ul>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> for h in [1, Hmax]
+   if h * p = n and p is Prime number
+      return p as Order , and h ;
+</code></pre></div>    </div>
+  </li>
+  <li>随机选取曲线上一个点$P_0$, 计算 $G = h \cdot P_0$ ,如果 $G = \infty$,那么重新运行5<br />
+可以验证,
+\(Order \cdot G = \infty\)
+那么 $G$ ,$Order$ ,和 $p$ 就是椭圆曲线的参数。</li>
+</ol>
+
+<blockquote>
+  <p>上面过程可以用  $(Z_{26},+)$  群来简单验证。</p>
+</blockquote>
+
+<h2 id="schoof-算法">Schoof 算法</h2>
+
+<p>先埋坑.
+// TODO</p>
+
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

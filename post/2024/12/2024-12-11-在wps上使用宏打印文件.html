@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>在wps上使用宏打印文件</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>在wps上使用宏打印文件</h2><time datetime="2024-12-11 16:08:56 +0800">2024/12/11 Wed</time> &nbsp; &nbsp;<a href="/tags/流水账.html" class="tag"><text><nobr>#流水账</nobr></text>&nbsp;</a><a href="/tags/日常.html" class="tag"><text><nobr>#日常</nobr></text>&nbsp;</a><article><p>昨天，<a href="/post/2024/12/2024-12-10-wps-mac-%E6%94%AF%E6%8C%81%E5%AE%8F%E4%BA%86">wps mac 支持宏了</a></p>
+
+<p>今天尝试下，有些坑</p>
+<h1 id="准备">准备</h1>
+<h2 id="安装虚拟打印机">安装虚拟打印机</h2>
+<p>下载安装 <a href="https://github.com/rodyager/RWTS-PDFwriter">RWTS-PDFwriter.pkg 2.4M左右</a></p>
+
+<h2 id="安装-pdfkit">安装 pdfkit</h2>
+<p>用于合并多个pdf</p>
+<blockquote>
+  <p>brew install pdfkit</p>
+</blockquote>
+
+<h1 id="wps-js宏需要注意的">wps js宏需要注意的</h1>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>let fn = `一个空格 测试.pdf`; // 目标名字
+let pn = 'PDFwriter' // 打印机的名字
+ActiveWindow.SelectedSheets.PrintOut(1, 20001, 1, 0, pn, 1, 1, fileNamePath, 0)
+</code></pre></div></div>
+
+<p><strong>文件保存的地址是沙盒目录</strong> 
+直接使用Documents目录会有一些权限问题， 注意授权，这里坑了我好久，已知打印失败</p>
+
+<p>通过进程管理器查看文件打开的文件和端口发现端倪 ~</p>
+
+<blockquote>
+  <p>~/Library/Containers/com.kingsoft.wpsoffice.mac/Data</p>
+</blockquote>
+
+<p>写文件，打印的pdfkit</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>function MyWriteFile(name,content){ 
+    let f = FreeFile()
+    let fpath = `${dirpath}/${name}` 
+    Open(fpath,f,jsBinary,jsWrite,jsLockWrite,content.length * 3)
+    Put(f,content) // write 会多一对“”引号
+    Close(f)
+    return fpath
+   }
+</code></pre></div></div>
+
+<h1 id="合并打印的pdf">合并打印的pdf</h1>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#!/bin/zsh
+ 
+FILENAME=""
+TXTNAME=""
+if [ "$1" = "1" ]; then
+    FILENAME="Pickup.pdf"
+    TXTNAME="Pickup.txt"
+elif [ "$1" = "2" ]; then
+    FILENAME="Delivery.pdf"
+    TXTNAME="Delivery.txt"
+else 
+    echo "参数1 提货Pickup 2 发货Delivery"
+    exit 1
+fi
+
+
+CurrentDir=$(dirname "$0")
+cd $CurrentDir
+rm cat "$FILENAME"  2&gt; /dev/null
+echo "合并 $TXTNAME"
+echo "$(cat $TXTNAME)"
+cat $TXTNAME | xargs -J {} pdftk {} cat output ${FILENAME} verbose
+</code></pre></div></div>
+
+<h1 id="初始化生成相应文件夹">初始化，生成相应文件夹</h1>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+const dirpath = 'DocumentsA/PDF'
+
+function init()  {
+	let arr = dirpath.split('/')
+
+	for(let i = 0 ,j = 1;i &lt; arr.length; j ++ ,i ++){
+		let s = arr.slice(0,j) 
+		let dirname = s.join('/')
+		try {
+			MkDir(dirname)
+		} catch (e) {
+			
+		}
+	}	
+}
+
+</code></pre></div></div>
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

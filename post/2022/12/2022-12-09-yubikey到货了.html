@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>yubikey到货了</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>yubikey到货了</h2><time datetime="2022-12-09 15:21:15 +0800">2022/12/09 Fri</time> &nbsp; &nbsp;<a href="/tags/流水账.html" class="tag"><text><nobr>#流水账</nobr></text>&nbsp;</a><a href="/tags/日常.html" class="tag"><text><nobr>#日常</nobr></text>&nbsp;</a><article><p>海淘的yubikey经过一个月的挫折，终于到了我的手中了。</p>
+
+<p>最想用的就是fido2的passwordless login</p>
+
+<p>简单折腾了下，fido2并没有导入初始密钥的地方。这点我比较疑惑，以为是只能使用内置出厂的密钥。</p>
+
+<p>这当然是不可能的，搜索了一下，发现是每次reset/初始化的时候会随机生成一个32字节位的AES256密钥</p>
+
+<p>此密钥不可导出，通过此密钥来派生各个网站的密钥对。</p>
+
+<p>具体流程参见<a href="https://developers.yubico.com/U2F/Protocol_details/Key_generation.html">Key generation</a></p>
+
+<h1 id="小惊喜">小惊喜</h1>
+<p>iPhone 上能用 yubikey的nfc功能。</p>
+
+<h1 id="失望之处">失望之处</h1>
+<p>目前除了微软的outlook，谷歌，github，这些网站都只是把yubikey 作为一个两步验证工具来使用，
+没有实现无密码登录的功能。而且微软的无密码登录只能在chrome类浏览器上使用（edge , chrome),
+而我习惯了火狐浏览器，并没有打算为此更换浏览器。</p>
+
+<p>希望这个世界能温柔的对待火狐和火狐用户。</p>
+
+<h1 id="piv">PIV</h1>
+<p>有空看看PIV功能怎么玩。</p>
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>
