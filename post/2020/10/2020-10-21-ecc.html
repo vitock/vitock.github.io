@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><script type="text/x-mathjax-config">MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});</script>
+  <script type="text/javascript" async src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><title>ECC椭圆曲线加密</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>ECC椭圆曲线加密</h2><time datetime="2020-10-21 21:02:30 +0800">2020/10/21 Wed</time> &nbsp; &nbsp;<a href="/tags/ECC.html" class="tag"><text><nobr>#ECC</nobr></text>&nbsp;</a><a href="/tags/加密.html" class="tag"><text><nobr>#加密</nobr></text>&nbsp;</a><a href="/tags/模逆元.html" class="tag"><text><nobr>#模逆元</nobr></text>&nbsp;</a><a href="/tags/素数.html" class="tag"><text><nobr>#素数</nobr></text>&nbsp;</a><article><h2 id="ecdh密钥分发算法">ECDH密钥分发算法</h2>
+
+<p>满足结合律交换律,根据几何图像,交换律显而易见,结合律未找到证明。
+下面大写表示曲线上的点,小写表示数.
+表示 PQ连线和曲线另外一个交点$R^{‘}$的x轴对称点R</p>
+
+<p><img src="/pics/2020-10-21-ecc/p1.jpg" alt="" /></p>
+
+<p>\(P + Q = R\) 
+表示,P点切线,与曲线交点的x轴对称点 
+<img src="/pics/2020-10-21-ecc/p2.jpg" alt="" />
+\(P + P + P  = 2 \cdot  P + P = 3P\)
+这里为了满足交换群的定义,加法需要一个单位元,需要定义一个无穷远点 $O$, $y = \infty$
+\(O + P = P  \\
+P + (-P) = O\)
+已知 $P$为公钥, $s$为私钥, $G$为公共曲线参数
+由$s$ 和 $G$ 求 $P$ 很容易,
+由$P$ 和 $G$ 求 $s$ 很困难,
+\(P_a =s_a  \cdot  G\)
+\(P_b = s_b  \cdot  G\)
+A 和 B 交换密钥流程
+B 只用将 自己的私钥 $s_b$ 乘 A的公钥 获得 $K_1$
+A 只用将 自己的私钥 $s_a$ 乘 B的公钥 获得 $K_2$
+\(\begin{aligned}
+K_1 &amp;=s_b  \cdot  P_a\\
+&amp;= s_b  \cdot  s_a \cdot  G\\
+&amp;= s_a  \cdot  s_b \cdot  G\\
+&amp;= s_a  \cdot  (s_b \cdot  G)\\
+&amp;= s_a  \cdot  P_b \\
+&amp;= K_2
+\end{aligned}\) 
+这样$K_1$ , $K_2$相等,就完成了交换.</p>
+<blockquote>
+  <p>两对密钥 公钥私钥交叉相乘结果相等 
+相乘是对应的椭圆曲线相乘法则</p>
+  <h2 id="ecc-加密过程">Ecc 加密过程</h2>
+  <p>加密过程实际上是用的 ecdh 随机生成一个 密钥 $K_r$,然后在用对称加密算法 例如 AES 等使用此 $K_r$ 加密。
+已知密钥对 $P = s  \cdot  G$ (P公钥,s私钥)
+随机生成一个密钥对 $P_r$ $s_r$
+对应的加密
+\(K_r=   s_r  \cdot  P\)</p>
+  <ul>
+    <li>然后使用AES , $K_r$  加密 明文M获得密文C,把临时公钥 ($P_r$  C)作为结果返回</li>
+    <li>同时为了解密时候能校验是否解密成功,需要返回一个校验量 MAC,
+可以是 HMAC($P_r$,$K_r$,C)
+如果AES加密是非密码本模式,需要返回初始化向量IV.
+$K_r$ 是一个点,$(X,Y)$坐标编码成可加密的key,一般只需要 X坐标,因为Y坐标可以通过X坐标计算出来
+      <h2 id="解密过程">解密过程</h2>
+      <p>从加密方获得 已知密文 $C$,和临时公钥 $P_r$, 校验参数MAC
+自己保密的私钥$s$</p>
+      <ol>
+        <li>下面计算 对应的AES 密钥,
+\(K_{2r} = s  \cdot  P_r\)
+参考 ECCDH密钥分发算法 ,两对ECC密钥的公钥私钥交叉相乘结果是一样的. $K_{2r} = K_r$
+证明
+ \(\begin{aligned}
+K_ {2r} &amp;= s  \cdot  P_r \\
+&amp;=  s  \cdot  s_r  \cdot  G \\&amp;= s  \cdot  G  \cdot  s_r \\&amp;= P  \cdot  s_r \\&amp;= K_r\end{aligned}\)</li>
+      </ol>
+    </li>
+  </ul>
+</blockquote>
+
+<ol>
+  <li>验证是否是结果是否正确
+计算$Mac2 = HAMC(P_r,K_{2r},C)$
+$Mac2 == MAC$ 说明数据正确,反之报错,终止解密</li>
+  <li>通过 $K_2$ 进行对应的 AES 解密,进行解密获得明文$TEXT$
+    <blockquote>
+      <p>如果需要初始化向量IV,也应该从加密方直接获取,加密方要把 iv mac 密文$C$, 临时公钥$P_r$ 一起返回</p>
+    </blockquote>
+  </li>
+</ol>
+
+<p>这里有<a href="http://iewl.herokuapp.com/www/ecc.html">一个在线加解密的网站</a>实现了上面的ECC 加密过程,
+  采用 AES-256-CBC,返回值里面有初始化向量</p>
+<blockquote>
+  <p>网站的提供的默认公钥
+<code class="language-plaintext highlighter-rouge">BAjDe3ig3ZKh5xO0+aA5Zuakz2ukRfe0M3Jzg8nVFn/pnmD58qBX5Iwxk/IUNTm6TVZv7MZcXOcx0KzKORTMD4U=</code></p>
+
+  <p><code class="language-plaintext highlighter-rouge">私钥 fPtrf9iBkJTyEuCKbJuAxRoJEZJFOqPueQZ0mtsOC34=</code>
+<br />
+曲线 secp256k1<br /></p>
+</blockquote>
+
+<h2 id="椭圆方程的求解">椭圆方程的求解</h2>
+<p>\(y^2 = x^3 + ax + b    \tag{1}\)
+\(y - y_p = k (x-x_p)   \tag{2}\)
+其中
+\(\begin{cases}
+k = \frac{y_p-y_q}{x_p-x_q}      &amp; \text{P != Q;连线的斜率}  \\[2ex]
+k = \frac{3x_p^2 + a}{2y_p}   &amp; \text{P = Q;表示在该点切线的斜率,也就是导数}  \\[2ex]
+\end{cases}\)
+将 2 带入 1中,根据得到 ,根据<a href="https://baike.baidu.com/item/%E9%9F%A6%E8%BE%BE%E5%AE%9A%E7%90%86">根与系数关系(韦达定理)</a></p>
+
+<p>\(\begin{aligned}
+&amp;  a_nX^n + b_{n-1}X^{n-1} + ... +  a_0 = 0 \\
+&amp;  x_0 + x_1+ ... + x_n = \frac{a_{n-1} }{a_n} ; &amp;\text{*}\\
+&amp;  x_0 \cdot x_1 \cdot  ... \cdot  x_n = (-1)^n \frac{a_0}{a_n}\\[2ex]
+\end{aligned}\)
+得到
+\(\begin{cases}
+x_R = k^2 -x_P - x_Q\\
+y_R = -y_P +k(x_P - x_R)
+\end{cases}\)</p>
+
+<h2 id="模素数p点运算">模素数P点运算</h2>
+<p>上面的说明是实数上的运算, 会有小数的问题,计算机处理起来有困难;采用有限域(模素数)上加减乘除,可以很好的解决这个问题,所有的$x,y$都是整数,并且根据公共点$G$生成足够多的点,
+上面的公式进一步变成
+\(\begin{cases}
+x_R = k^2 -x_P - x_Q  \pmod p \\
+y_R = -y_P +k(x_P - x_R) \pmod p
+\end{cases}\)
+\(\begin{cases}
+k = (y_p-y_q)\cdot(x_p-x_q)^{-1}  \pmod  p \\[2ex]
+k =(3x_p^2 + a)\cdot(2y_p)^{-1}   \pmod p \\[2ex]
+\end{cases}\)
+模素数P算法获取到的点已经绝大部分不再曲线了,全部分布在 [0 ,p-1] 这个正方形区间内.</p>
+
+<h2 id="模逆元">模逆元</h2>
+<p>\(ab = 1 \pmod p\)
+ ab 互为模逆元,
+ 这里 由于p 取的素数, a,b都小于p,那么a,b和p都互质数,
+ 模逆元必定存在(充要条件.a 和p 互质,那么,b存在);
+ 快速求模逆元,可以用<a href="https://zh.wikipedia.org/wiki/%E6%89%A9%E5%B1%95%E6%AC%A7%E5%87%A0%E9%87%8C%E5%BE%97%E7%AE%97%E6%B3%95">扩展欧几里得算法</a>,具体方式就是辗转相除,细节可以看百科</p>
+
+<p>后续博文更新:</p>
+<ul>
+  <li><a href="/post/2021/08/2021-08-07-%E6%89%A9%E5%B1%95%E6%AC%A7%E5%87%A0%E9%87%8C%E5%BE%97%E7%AE%97%E6%B3%95">扩展欧几里得算法</a></li>
+  <li><a href="/post/2022/05/2022-05-04-binary-extended-euclidean-algorithm">二进制扩展欧几里得算法(binary extended euclidean algorithm)</a></li>
+</ul>
+
+<h2 id="判断一个公钥是否合法">判断一个公钥是否合法</h2>
+<p>实现代码</p>
+<ol>
+  <li>判断是否满足方程</li>
+  <li>判断该公钥 $P$ 乘以生成元的阶$n$ 
+由于$n$是一个素数,任意元素的阶都是 $n$ ,根据这个性质可以判断</li>
+</ol>
+
+<p>更多详见<a href="https://crypto.stackexchange.com/questions/95752/how-to-decide-if-a-point-on-a-elliptic-curve-belongs-to-a-group-generated-by-a-g">此问答</a></p>
+
+<h2 id="大结局">大结局</h2>
+<p>这样,ECC加密过程基本清楚.
+实际上,很多ECC文章写的ecc加密过程是这样
+已知公钥 P,私钥s 消息 M,(也就是X,坐标,y坐标根据方程算出来);
+加密过程 $(C_m,C_p)$ 为加密结果
+$r$为随机数.作为临时私钥
+$C_p$临时公钥,和加密结果一起返回
+\(C_m = M + r \cdot P \\
+C_p = r \cdot G\\\)
+解密过程,知道 C 和 S
+\(\begin{aligned}
+M &amp;= C -  s \cdot C_p \\ 
+  &amp;= M + r \cdot P - s \cdot  C_p \\
+  &amp;= M + (r\cdot s \cdot G - s \cdot r \cdot G)\\
+  &amp;= M
+\end{aligned}\)
+减法表示逆元,对于任意 点$P + (-P) = O$
+椭圆曲线零元是 无穷远处的点.作图可知$P$点逆元表示P的x轴对称点 $P^{‘}$ 
+这种方式有一个缺点,就是计算过程比较麻烦,而且也是用到了dh秘钥交换的方式。
+所以很多加密实现都是直接用 ecdh方式商定一个共同的随机私钥，再通过AES等对称加密方式进行加密，从而加速运算。</p>
+<h3 id="推荐资料">推荐资料</h3>
+<p><a href="https://zhuanlan.zhihu.com/p/143122476">零知识证明 - 椭圆曲线基础</a>
+ ## Menezes-Vanstone 密码体制
+ 利用ecdh密钥交换,生成交换的密钥 $P$ 
+ 对于明文分拆,加密过程
+ \(m = (m1,m2) \\
+ c1 = m1 * P.x \pmod P \\
+ c2 = m1 * P.x \pmod P \\\)
+ 解密过程
+ \(d1 = c1 * P.x^{-1} \pmod P  \\
+ d2 = c2 * P.x^{-1} \pmod P \\\)
+ 利用扩展欧几里得算法能快速求模p逆元.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+
+const exGcd = require("./exGcd.js");
+const isPrime = require("./miller-rabin.js");
+const eulerJudge = require("./euler-judge").eulerJudge
+const cipolla_sqrt = require("./cipolla").cipolla_sqrt;
+const ZeroPoint = { x: 0, y: -1 };
+const a = 0n;
+const  b = 7n 
+const MaxCofactor = 8;
+function exGcd_Num(a, b) {
+  return Number(exGcd(BigInt(a), BigInt(b)));
+}
+function isSamePoint(A,B){
+  return A.x == B.x &amp;&amp; A.y == B.y;
+}
+function getRandomPrime(){
+  while(1){
+    var m = 65536000 + Math.floor(Math.random() * 100000000);
+    if (m &gt; 2 &amp;&amp; isPrime(m) ) {
+      console.log('random prime:',m);
+      return m ;
+    }
+  }   
+}
+class ECC{
+  
+  constructor(){
+    /*
+    this.Prime = 9319;
+    // this.h = 1;
+    // this.CurveOrder = 9127;
+    /// order = curveorder / h
+    this.Order = 9127;
+    this.G = { x: 5762, y: 1167 };
+    */
+    this.Prime = 6741313;
+    // this.h = 1;
+    // this.CurveOrder = 6742804;
+    /// order = curveorder / h
+    this.Order = 1685701;
+    this.G = { x: 2331692, y: 6255336 };
+
+    this.Prime = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2Fn
+
+    this.Order =  0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141n
+    var x = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798n;
+    var y = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8n
+    this.G = {x,y};
+
+  }
+
+
+  logN(a,msg){
+    console.log('' + msg,a.toString(16))
+  }
+  PointAdd(P, Q) {
+    const Prime = this.Prime;
+    if (P.y &lt; 0) {
+      return Q;
+    }
+    if (Q.y &lt; 0) {
+      return P;
+    }
+
+    var k = 0;
+    if (P.x == Q.x &amp;&amp; P.y == Q.y) {
+      /// 特殊点,斜率无穷大
+      if (P.y == 0) {
+        return ZeroPoint;
+      }
+
+      this.logN(0,'----------------------------')
+  
+      var tmp = exGcd(2n * P.y, Prime);
+      k = ((3n * ((P.x * P.x) % Prime) + a) * tmp) % Prime;
+
+      if (k &lt; 0) {
+        k += Prime;
+      }
+     
+    } else {
+      if (P.x == Q.x) {
+        return ZeroPoint;
+      }
+
+      var tmpz = (P.x - Q.x) % Prime;
+      if (tmpz &lt; 0) {
+        tmpz += Prime;
+      }
+      var tmp = exGcd(BigInt(tmpz), BigInt(Prime));
+
+      var tmpDy = ((P.y - Q.y) % Prime) + Prime;
+      k = (tmpDy * tmp) % Prime;
+      if (k &lt; 0) {
+        k += Prime;
+      }
+
+      // console.log("px",P.x.toString(16));
+      // console.log("py",P.y.toString(16));
+      // console.log("qx",Q.x.toString(16));
+      // console.log("qy",Q.y.toString(16));
+
+      // console.log("k",k.toString(16));
+    }
+
+    const x = (((k * k - P.x - Q.x) % Prime) + Prime) % Prime;
+    const y = ((((-P.y + k * (P.x - x)) % Prime) + Prime) % Prime);
+
+    // this.logN(k * k - P.x - Q.x,"MMM")
+    // this.logN('-------------')
+    // this.logN(P.x,"P.x")
+    // this.logN(Q.x,"Q.x")
+    // this.logN(k * k ,"kk")
+    // console.log("k",k.toString(16));
+    // console.log("xx",x.toString(16));
+    // console.log("yy",y.toString(16));
+    return { x, y };
+  }
+
+  PointTimes(P, s){
+    var s1 = s % (this.Order );
+    return this._PointTimes(P,s1);
+  }
+  _PointTimes(P, s) {
+    if (s == 0) {
+      return ZeroPoint;
+    }
+    if (s == 1) {
+      return P;
+    }
+    if (s == 2) {
+      return this.PointAdd(P, P);
+    }
+
+    var s_0 = s % 2n;
+    var s_2 = (s - s_0) / 2n;
+    var P2 = this._PointTimes(P, s_2);
+    var result = this.PointAdd(P2, P2);
+    if (s_0) {
+      result = this.PointAdd(result, P);
+    }
+    // console.log('times',P,result,s)
+    return result;
+  }
+
+  genKeyPair(key){
+    if(key == 0 || key &gt;= this.Order){
+      throw `key must  be  between [0,  ${this.Order}]`
+      return
+    }
+    var keyout = key ? key : Math.floor(Math.random() * this.Order)
+    while(keyout == 0){
+      keyout =  Math.floor(Math.random() * this.Order)
+    }
+    return {
+      private:keyout,
+      public:this.PointTimes(this.G,keyout),
+      curve:{
+        P:this.Prime,
+        Order:this.Order,
+        G:this.G
+      }
+    }
+  }
+
+  ecdh(privatekeyA,publicKeyOfB){
+    return this.PointTimes(publicKeyOfB,privatekeyA);
+  }
+
+
+  // return &lt;R.x, S&gt;
+  SingMsg(msgHash,PriKey){
+    const Order = this.Order;
+    const G = this.G;
+    if (PriKey == 0) {
+      throw "privateKey cant  be 0"
+    }
+
+    var S = 0;
+    do{
+      var randK = Math.floor(Math.random() * Order);
+      if (randK == 0) {
+        randK = 1;
+      }
+
+
+      var R = this.PointTimes(G, randK);
+      var k1 = exGcd_Num(randK, Order );
+      S = k1 * ((msgHash + (PriKey * R.x % Order)) % Order) % Order ;
+    }while(  S == 0);
+
+    
+    return [R.x,S];
+  }
+
+  VerifySign(msgHash,SignInfo,PubKey){
+    const Order = this.Order;
+    const G = this.G;
+    var Rx = SignInfo[0];
+    var S = SignInfo[1];
+      
+    var S1 = exGcd_Num(S, Order );
+    var CheckR = this.PointAdd(
+      this.PointTimes(G, (msgHash * S1) ),
+      this.PointTimes(PubKey, (Rx * S1) )
+    );
+    return CheckR.x == Rx;
+  }
+  
+  _findGeneratorG(Prime){
+   // 找到素数阶生成元
+   if(1){
+    /**
+     * 计算曲线的阶应该使用 schoof 算法,以后再更新..
+     */
+    var OrderOfCurve =  1;
+    for (let x = 0; x &lt; Prime; x++) {
+
+      var a = ((x * x % Prime)* x + b) % Prime ;
+      var exist =  eulerJudge(a,Prime);
+      if (exist ) {
+        /// a== 0 ,那么 y = 0,只有一个点
+        OrderOfCurve += (a == 0 ? 1 : 2);
+      }
+    }
+  
+      
+      
+    /// 分解 曲线的阶 n = r * p ^k, p 是素数,那么肯定存在 阶为p ^k的子群, 西罗定理 , 这里k 一般是 1 ,(r,p)互质
+
+    var h =  1;
+    var tmpOrder = -1;
+    var isSucc = 0;;
+    /// h 很小,保证 order 很大
+    for (let r = 1; r &lt; MaxCofactor ; r++) {
+      if (OrderOfCurve % r == 0) {
+        var order0 = OrderOfCurve/r;
+        if (isPrime(order0)) {
+          tmpOrder = order0;
+          h  = r;
+          isSucc = 1;
+          break;
+        }
+      }
+    }
+
+
+    if(h == tmpOrder){
+      tmpOrder *= h;
+      h = 1;
+    }
+
+    
+      
+    console.log('\n\n\n-----------');
+    console.log("Prime ",Prime);
+    console.log("curve Order ",OrderOfCurve)
+    console.log("group Order ",tmpOrder)
+    console.log("h ",h)
+      
+
+    if(isSucc == 0 ){
+      return 0
+    }
+
+    this.Order = tmpOrder;
+    this.Prime = Prime;
+    var G ;
+    do{
+
+      var tmpG = {x:0,y:-1}
+      do {
+        tmpG.x = Math.floor(Math.random() * Prime);
+        // -1 表示无解
+
+        var tmp = Number(BigInt(tmpG.x) * BigInt(tmpG.x)  % BigInt(Prime) * BigInt(tmpG.x) % BigInt(Prime)) + b
+        tmpG.y  = cipolla_sqrt(tmp, Prime );
+        console.log(tmpG);
+      } while (tmpG.y &lt; 0);
+
+      G = this.PointTimes(tmpG,h);
+    }while(G.y &lt; 0 )
+  
+    console.log("generator of G ",tmpG);
+    console.log("G ",G);
+    var checkG = this._PointTimes(G,tmpOrder)
+    console.log('check G',checkG.y &lt; 0 ? '✅' : '❌' )
+    console.log('-----------\n\n\n');
+    if(checkG.y &gt;=0){
+      throw "order of curve is wrong"
+    }
+    
+    this.G = G ;
+    return 1;
+
+  }
+  }
+
+  findNewGroup(){
+    var result = 0;
+    do {
+      var Prime =  getRandomPrime();
+      result = this._findGeneratorG(Prime);
+    } while (result == 0);
+  }
+
+  /**
+   * Menezes-Vanstone 密码体制
+   * msg 这里限制 4字节.数字,仅原理展示
+   */
+  encyptMsg(msg,PubKey){
+    var randK =  Math.floor(Math.random() * this.Order);
+    while(randK == 0){
+      randK =  Math.floor(Math.random() * this.Order);
+    }
+
+
+    var PubRnd = this.PointTimes(this.G,randK);
+    var dh = this.PointTimes(PubKey,randK);
+    // 可以把msg 按字节平分,
+    // msg -&gt; (msg0 msg1);
+    
+    let bf =   Buffer.alloc(4,0);
+
+    bf.writeUInt32BE(msg);
+    var msg0 = bf.readUInt16BE(0);
+    var msg1 = bf.readUInt16BE(2);
+    if (msg0 &gt; this.Prime || msg1 &gt; this.Prime) {
+      throw 'msg too large'
+    }
+ 
+    var out0 = Number(BigInt(msg0) * BigInt(dh.x) % BigInt(this.Prime));
+    var out1 = Number(BigInt(msg1) * BigInt(dh.y) % BigInt(this.Prime));
+ 
+    return [PubRnd,out0,out1];
+  }
+
+  decryptMsg(cipher,privatekey){
+    var tmpPub = cipher[0];
+    var dh  = this.PointTimes(tmpPub,privatekey);
+ 
+    var x1 = exGcd(BigInt(dh.x),BigInt(this.Prime));
+    var y1 = exGcd(BigInt(dh.y),BigInt(this.Prime));
+    
+    var msg0 = Number(BigInt(cipher[1]) * x1 % BigInt(this.Prime));
+    var msg1 = Number(BigInt(cipher[2]) * y1 % BigInt(this.Prime));
+
+
+    /// 避免溢出,实际上,溢出了肯定就是解密失败了
+    msg0 = msg0 &amp; 0xffff;
+    msg1 = msg1 &amp; 0xffff;
+
+    let bf = Buffer.alloc(4,0);
+    bf.writeUInt16BE(msg0);
+    bf.writeUInt16BE(msg1,2);
+    var outMsg = bf.readUInt32BE(0);
+    return outMsg;
+  }
+
+}
+
+exports.EC = new ECC;
+let ec =  new ECC;
+
+// for (var i = 100 ; i &lt; 120 ; ++ i ){
+//   var s = ec.PointTimes(ec.G,i);
+//   console.log(i,"---",s);
+// }
+
+var s = ec.PointTimes(ec.G,3n);
+console.log("---Finalx",s.x.toString(16));
+console.log("---Finaly",s.y.toString(16));
+
+
+
+
+if(0){
+  var p = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2Fn
+  var x = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798n
+  var n = ((x * x % p) * x )% p + 7n
+
+  // y^2 = x^3 + ax + b mod Prime
+
+  var y = cipolla_sqrt(n,p);
+ 
+  console.log("Y",y.toString(16))
+  console.log("Y2",((p - y ) % p).toString(16) )
+
+
+  // 32670510020758816978083085130507043184471273380659243275938904335757337482424n
+}
+
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+
+!function(){
+const EC = require('./ecc').EC
+var a = EC.genKeyPair(Math.floor(Math.random() * EC.Order ));
+var b = EC.genKeyPair();
+console.log('keypair A',a );
+console.log('keypair B',b );
+if(1){
+    var ecdhA = EC.ecdh(a.private,b.public);
+    var ecdhB = EC.ecdh(b.private,a.public);
+    console.log('ECDH of A', ecdhA);
+    console.log('ECDH of B', ecdhB);
+    console.log('ECDH A == B ?', ecdhB.x == ecdhA.x &amp;&amp; ecdhB.y == ecdhA.y);
+}
+
+
+if(1){
+    console.log('\n\n-----------Sign-------')
+    var msgHash = Math.floor(Math.random() * EC.Order);
+    console.log('msg to be sign:',msgHash);
+    var signinfo = EC.SingMsg(msgHash,a.private);
+    console.log('sign with key A.private result',signinfo);
+
+    var ra = EC.VerifySign(msgHash,signinfo, a.public);
+    var rb = EC.VerifySign(msgHash,signinfo, b.public);
+
+    console.log('verify with A.public:',ra ? '✅' : '❌');
+    console.log('verify with B.public:',rb ? '✅' : '❌');
+}
+
+
+if(1){
+    console.log('\n\n--------------Encryption (Menezes-Vanstone)--------')
+    var msg = Math.floor(Math.random() * EC.Prime) &amp; 0xffffffff;
+
+    console.log('message :',msg);
+
+    var cipher = EC.encyptMsg(msg,a.public);
+
+    console.log("encrypt (by A.public):",cipher);
+    var msg2 = EC.decryptMsg(cipher,a.private);
+    console.log('decrypt (by A.private)',msg2,msg2 == msg ? '✅' : '❌');
+
+    msg2 = EC.decryptMsg(cipher,b.private);
+    console.log('decrypt (by B.private)',msg2,msg2 == msg ? '✅' : '❌');
+}
+ 
+
+// // // 重新生成素数P,生成点
+// EC.findNewGroup()
+// var c = EC.genKeyPair()
+// console.log(c); 
+
+}();
+
+
+</code></pre></div></div>
+
+<p>输出</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>keypair A {
+  private: 338741,
+  public: { x: 1237765, y: 721891 },
+  curve: { P: 1271293, Order: 423013, G: { x: 336180, y: 636912 } }
+}
+keypair B {
+  private: 270816,
+  public: { x: 541275, y: 574997 },
+  curve: { P: 1271293, Order: 423013, G: { x: 336180, y: 636912 } }
+}
+ECDH of A { x: 145062, y: 1113104 }
+ECDH of B { x: 145062, y: 1113104 }
+ECDH A == B ? true
+
+
+-----------Sign-------
+msg to be sign: 257748
+sign with key A.private result [ 120209, 278454 ]
+verify with A.public: ✅
+verify with B.public: ❌
+
+
+--------------Encryption (Menezes-Vanstone)--------
+message : 90572
+encrypt (by A.public): [ { x: 995290, y: 1257659 }, 129839, 955553 ]
+decrypt (by A.private) 90572 ✅
+decrypt (by B.private) 3740080411 ❌
+
+</code></pre></div></div>
+
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

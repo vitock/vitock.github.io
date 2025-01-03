@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>Yes Or No?</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>Yes Or No?</h2><time datetime="2024-12-23 17:32:56 +0800">2024/12/23 Mon</time> &nbsp; &nbsp;<a href="/tags/流水账.html" class="tag"><text><nobr>#流水账</nobr></text>&nbsp;</a><a href="/tags/日常.html" class="tag"><text><nobr>#日常</nobr></text>&nbsp;</a><a href="/tags/工具.html" class="tag"><text><nobr>#工具</nobr></text>&nbsp;</a><article><div id="yesnobg">
+
+<text id="yesno"></text>
+<text id="yesnobgTxt"></text>
+</div>
+
+<style>
+    #yesno{
+        margin:0;
+        text-align: center;
+        width: 100%;
+        display:block;
+        font-size: 10rem;
+        font-weight: 600;
+        font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+ 
+        text-shadow: #bbb 0.1em 0.1em 0.2em;
+    }
+
+    #yesnobg{
+        content:"d"
+    }
+
+    #yesnobgTxt{
+        margin:-4rem 0rem;
+        text-align: center;
+        width: 100%;
+        display:block;
+        font-size: 10rem;
+        color:#fc8c23;
+
+        text-shadow: #bbb 0.1em 0.1em 0.2em;
+ 
+    }
+    .yes{
+        color:#66c18c
+    }
+    .no{
+        color:#8076a3
+    }
+
+    time, h2 ,.tag ,.footer{
+        /* visibility: hidden; */
+        display:none
+    }
+</style>
+
+<script>
+    var c = 0
+    const dice = '\u2680\u2681\u2682\u2683\u2684\u2685'
+    function yesOrNo(){
+        let arr = new Uint32Array(100)
+        crypto.getRandomValues(arr)
+        if(1){
+             let idx = arr[0] % 100
+             let ss = arr[idx] % 6
+             let yn = ss > 2
+             let ele = document.getElementById('yesno')
+             ele.innerText = yn ? "Yes" :"No"
+             ele.className = yn ? "yes" :"no"
+             let ele2 = document.getElementById('yesnobgTxt')
+             
+             ele2.innerText = dice.substring(ss , ss + 1)
+        }else{
+            requestAnimationFrame(yesOrNo)
+        }
+    }
+    setTimeout(() => {
+        yesOrNo()        
+    }, 500);
+    
+    
+    
+
+ 
+
+
+    
+
+ 
+    
+</script>
+
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>
