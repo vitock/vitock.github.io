@@ -1,0 +1,33 @@
+<html>
+
+<style type="text/css" media="screen">
+  .container {
+    margin: 10px auto;
+    max-width: 600px;
+    text-align: center;
+  }
+  h1 {
+    margin: 30px 0;
+    font-size: 4em;
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+  a {
+    color: #118fff;
+    text-decoration: none;
+  } 
+</style>
+
+<div class="container">
+  <h1>404</h1>
+
+  <p><strong>Page not found :(</strong></p>
+  <p>The requested page could not be found. </p>
+  <p>it will redirect to the<strong> <a href="/">home page</a> </strong>after 5 seconds<p>
+</div>
+<script >
+  setTimeout(function(){
+    location.href = "/"
+  }, 3000);
+</script>
+</html>

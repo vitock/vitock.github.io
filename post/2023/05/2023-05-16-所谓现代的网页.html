@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>所谓"现代"的网页</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>所谓"现代"的网页</h2><time datetime="2023-05-16 17:08:56 +0800">2023/05/16 Tue</time> &nbsp; &nbsp;<a href="/tags/流水账.html" class="tag"><text><nobr>#流水账</nobr></text>&nbsp;</a><a href="/tags/日常.html" class="tag"><text><nobr>#日常</nobr></text>&nbsp;</a><article><p>使用 outlook ，经常 swichomega 上显示几百个加载失败，交互卡住，一个网页需要这么多请求？</p>
+
+<p>用Firefox看了下，这些网站构成。</p>
+
+<h1 id="outlookcom">outlook.com</h1>
+<p>还得是你，MS ，不愧是传统 it 巨头👍，什么都讲究一个字：巨！</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>请求数</th>
+      <th>类型</th>
+      <th>大小</th>
+      <th>传输</th>
+      <th>时间</th>
+      <th>无阻塞时间</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>544</td>
+      <td>js</td>
+      <td>64,686.71 kB</td>
+      <td>48,563.64 kB</td>
+      <td>6.85 秒</td>
+      <td>6.85 秒</td>
+    </tr>
+    <tr>
+      <td>321</td>
+      <td>xhr</td>
+      <td>2,604.75 kB</td>
+      <td>937.14 kB</td>
+      <td>196.57 秒</td>
+      <td>187.91 秒</td>
+    </tr>
+    <tr>
+      <td>85</td>
+      <td>css</td>
+      <td>1,138.26 kB</td>
+      <td>733.38 kB</td>
+      <td>0 秒</td>
+      <td>0 秒</td>
+    </tr>
+    <tr>
+      <td>18</td>
+      <td>html</td>
+      <td>929.29 kB</td>
+      <td>952.28 kB</td>
+      <td>22.59 秒</td>
+      <td>17.20 秒</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>fonts</td>
+      <td>249.35 kB</td>
+      <td>72.87 kB</td>
+      <td>0 秒</td>
+      <td>0 秒</td>
+    </tr>
+    <tr>
+      <td>27</td>
+      <td>images</td>
+      <td>210.61 kB</td>
+      <td>182.97 kB</td>
+      <td>10.67 秒</td>
+      <td>6.12 秒</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>ws</td>
+      <td>0 kB</td>
+      <td>0.48 kB</td>
+      <td>0 秒</td>
+      <td>0 秒</td>
+    </tr>
+  </tbody>
+</table>
+
+<h1 id="mailqqcom">mail.qq.com</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>请求数</th>
+      <th>类型</th>
+      <th>大小</th>
+      <th>传输</th>
+      <th>时间</th>
+      <th>无阻塞时间</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>122</td>
+      <td>js</td>
+      <td>13,494.17 kB</td>
+      <td>6,444.35 kB</td>
+      <td>100 秒</td>
+      <td>96.75 秒</td>
+    </tr>
+    <tr>
+      <td>31</td>
+      <td>xhr</td>
+      <td>6,031.19 kB</td>
+      <td>2,307.04 kB</td>
+      <td>5.08 秒</td>
+      <td>4.11 秒</td>
+    </tr>
+    <tr>
+      <td>56</td>
+      <td>html</td>
+      <td>1,110.35 kB</td>
+      <td>353.02 kB</td>
+      <td>111.13 秒</td>
+      <td>108.50 秒</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>css</td>
+      <td>428.02 kB</td>
+      <td>82.36 kB</td>
+      <td>1.40 秒</td>
+      <td>0.94 秒</td>
+    </tr>
+    <tr>
+      <td>50</td>
+      <td>images</td>
+      <td>416.17 kB</td>
+      <td>251.50 kB</td>
+      <td>6.77 秒</td>
+      <td>4.19 秒</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>other</td>
+      <td>0.41 kB</td>
+      <td>3.11 kB</td>
+      <td>1.66 秒</td>
+      <td>1.58 秒</td>
+    </tr>
+  </tbody>
+</table>
+
+<h1 id="gmail">gmail</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>请求数</th>
+      <th>类型</th>
+      <th>大小</th>
+      <th>传输</th>
+      <th>时间</th>
+      <th>无阻塞时间</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>140</td>
+      <td>js</td>
+      <td>19,966.39 kB</td>
+      <td>10,386.86 kB</td>
+      <td>18.58 秒</td>
+      <td>18.58 秒</td>
+    </tr>
+    <tr>
+      <td>138</td>
+      <td>xhr</td>
+      <td>4,082.41 kB</td>
+      <td>859.96 kB</td>
+      <td>76.30 秒</td>
+      <td>76.10 秒</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>css</td>
+      <td>3,322.90 kB</td>
+      <td>1.41 kB</td>
+      <td>1.44 秒</td>
+      <td>1.44 秒</td>
+    </tr>
+    <tr>
+      <td>45</td>
+      <td>html</td>
+      <td>2,101.59 kB</td>
+      <td>674.50 kB</td>
+      <td>36.83 秒</td>
+      <td>30.92 秒</td>
+    </tr>
+    <tr>
+      <td>118</td>
+      <td>images</td>
+      <td>425.30 kB</td>
+      <td>293.06 kB</td>
+      <td>21.73 秒</td>
+      <td>20.45 秒</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>fonts</td>
+      <td>279.74 kB</td>
+      <td>285.59 kB</td>
+      <td>6.08 秒</td>
+      <td>6.09 秒</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>other</td>
+      <td>0.66 kB</td>
+      <td>10.18 kB</td>
+      <td>3.80 秒</td>
+      <td>3.80 秒</td>
+    </tr>
+  </tbody>
+</table>
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

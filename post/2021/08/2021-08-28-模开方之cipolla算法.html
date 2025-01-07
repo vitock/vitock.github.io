@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><script type="text/x-mathjax-config">MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});</script>
+  <script type="text/javascript" async src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><title>模开方之Cipolla算法</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>模开方之Cipolla算法</h2><time datetime="2021-08-29 03:27:10 +0800">2021/08/29 Sun</time> &nbsp; &nbsp;<a href="/tags/ECC.html" class="tag"><text><nobr>#ECC</nobr></text>&nbsp;</a><a href="/tags/素数.html" class="tag"><text><nobr>#素数</nobr></text>&nbsp;</a><a href="/tags/模.html" class="tag"><text><nobr>#模</nobr></text>&nbsp;</a><a href="/tags/加密.html" class="tag"><text><nobr>#加密</nobr></text>&nbsp;</a><article><h2 id="写在前面">写在前面</h2>
+<p>前面关于ECC的文章(<a href="/post/2020/10/2020-10-21-ecc">ECC椭圆曲线加密</a>),写到Ecc的一些实现求解曲线上点,用的方法太慢(岂止是慢,暴力枚举,在素数$p$很大的时候就… )</p>
+
+<p>而且现在网络上传输公钥(比如比特币)基本都是压缩过的,传输公钥也就是点$P$的时候,只传输$x$坐标,通过曲线方程能求解对应的两个$y$,这里因为是模$p$算法
+$y_1 + y_2 = p$,那么只需要标记$y$的奇偶就行了,<br />
+例如比特币中 公钥结构03+x(如果y是奇数)，前缀02+x(如果y是偶数)。
+好，就引出我们今天的主题，如果求解模平方根。
+这里需要引入几个定理 ,下面的 $p$都是素数</p>
+
+<h2 id="一些定理公式">一些定理/公式</h2>
+<ol>
+  <li>欧拉判别法<br />
+对于</li>
+</ol>
+
+<p>\(x^2 \equiv a \pmod p\)
+若 $a$为平方剩余($x$有解)的充要条件  $a ^{\frac{p-1}{2}} \equiv 1 \pmod p$<br />
+若 $a$为平方非剩余($x$无解)的充要条件  $a ^{\frac{p-1}{2}} \equiv -1 \pmod p$
+$p$的二次剩余和二次非剩余一样多,都是$\frac{p-1}{2}$。</p>
+
+<p>必要性,通过费马小定理就行,充分性需要用到其他知识,不在本文讨(我)论(也)范(不)围(懂)</p>
+<ol>
+  <li>…</li>
+</ol>
+
+\[(a + b) ^p \equiv a ^ p + b ^p \pmod p\]
+
+<p>这里二项式展开就行了就行了</p>
+
+\[(a + b) ^p = C_p^0 a ^p + C_p^1 a ^{(p-1)} b ^1 \dotsi + C_p^p a ^{(p-p)} b ^p \\
+C_p^i = \frac{p!}{i!(p-i)!}\]
+
+<p>显然,只有第一项和最后一项的组合数不包含$p$乘数,命题得证明</p>
+
+<p>随机选一个数$a$, 让$a^2-n$是模$p$二次非剩余,也就是让
+\((a^2 -n)^{\frac{p-1}{2}} \equiv -1 \pmod p\)</p>
+<blockquote>
+  <blockquote>
+    <p>由于p的剩余和非剩余五五开,很容易找到。平均两次就能找到了</p>
+  </blockquote>
+</blockquote>
+
+<p>##</p>
+
+<p>定义 $w=\sqrt{a^2 - n}$</p>
+<blockquote>
+  <p>这里类似于复数 里面的 $i ^2 = -1$<br />
+扩充之后的加法乘法都和原来整数一致。</p>
+</blockquote>
+
+<p>那么有</p>
+
+\[\begin{aligned}
+  w ^ p &amp;= w ^{p-1} w \\
+       &amp;= (a^2 -n)^{\frac{p-1}{2}} w \\
+       &amp; =-w \pmod p
+\end{aligned}\]
+
+<h2 id="再加一个公式">再加一个公式</h2>
+
+\[a ^p = a \pmod p\]
+
+<h2 id="cipolla算法">Cipolla算法</h2>
+
+<p>\(x^2 \equiv n \pmod p\)<br />
+\(x \equiv (a + w) ^ {\frac{p+1}{2}}\)
+推导
+\(\begin{aligned}
+x &amp;\equiv (a + w) ^ {\frac{p+1}{2}} 
+\\&amp;\equiv ((a + w)^p (a + w))^{1/2}
+\\&amp;\equiv ((a^p + w^p)(a + w)) ^{1/2}
+\\&amp;\equiv ((a -w )(a + w)) ^{1/2}
+\\&amp;\equiv (a^2 - w^2) ^{1/2}
+\\&amp;\equiv (a ^2 - (a^2 -n)) ^{1/2}
+\\&amp;\equiv  n ^{1/2} \pmod p
+\end{aligned}\)</p>
+
+<p>通过扩充数域，能很方便表示方程的根。</p>
+
+<p>注意，上面 $(a + w) ^ {\frac{p+1}{2}}$ 计算结果的虚部肯定为0.根据拉格朗日定理方程解的个数至多是2, 欧拉判定存在两个实数的解。
+$q=(p+1)/2 = 2k$</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+
+const eulerJudge = require("./euler-judge")
+ 
+
+// 解方程 x^2 = n mod p 
+function cipolla_sqrt(n,p){
+    if (n == 0) {
+        return 0;
+    }
+    if(!eulerJudge.eulerJudge(n,p)){
+        return -1;
+    }
+
+    // 随机选取 数字a 使得  a ^ 2 -n  是p二次非剩余;
+    var a = 0n;
+    var A2_N = 0;
+    do {
+        // a = BigInt(Math.floor((Math.random() * 1000 )))
+        a =  127n
+
+        A2_N = (a * a - n  ) % p ;
+        if(A2_N &lt; 0){
+            A2_N += p;
+        }
+  
+
+        
+    } while (eulerJudge.eulerJudge(A2_N,p));
+    // console.log('a,w2',a,A2_N)
+
+
+    // console.log('hhhcccc')
+    // console.log(a.toString(16));
+    // console.log(1);
+    // console.log(A2_N.toString(16));
+    // console.log(((p+1n)/2n).toString(16));
+    // console.log(p.toString(16));
+    var result = pow2([a,1n],A2_N,(p+1n)/2n,p);
+    // console.log(result, (result[0] * result[0]) %p == n);
+    return result[0] % p;
+
+    // w = sqrt(a^2 - n),w作为虚部
+    // return (a + w) ^((p + 1)/2)
+
+}
+
+// 防止溢出
+function bigNumberTimes(a,b,p){
+    return BigInt(a) * BigInt(b) % BigInt(p);
+    
+}
+
+// 复数相乘
+
+function multiy(X1,X2,A2_N,p){
+    
+    var x = bigNumberTimes(X1[0] , X2[0] , p) + bigNumberTimes( X1[1] , bigNumberTimes(X2[1] ,A2_N , p),p);
+
+    x = x % p
+
+
+     
+    var y = (bigNumberTimes(X1[0] , X2[1],p) + bigNumberTimes(X1[1] , X2[0],p)) % p;
+
+    y = y % p
+
+    if (x &lt; 0) {
+        x = p + x;
+    }
+    if(y &lt; 0){
+        y = p + y;
+    }
+
+    return [x ,y];
+}
+
+/// w = a^2-n
+/// X ^ k % p
+/// X = x + yw  实部x,虚部 y, w类似于虚数单位i
+function pow2(xy,A2_N,k,p){
+    if(k == 1n){
+        return xy;
+    }
+    else if(k == 2n){
+        return multiy(xy,xy,A2_N,p)
+    }
+    var left = k % 2n;
+    var k_2 = (k - left ) /2n;
+    var half = pow2(xy,A2_N,k_2,p);
+
+    var r = multiy(half,half,A2_N,p);
+    if(left == 0){
+        
+        return r
+    }else{
+        
+        return multiy(r,xy,A2_N,p);
+    }
+}
+
+
+
+
+
+
+
+
+
+ 
+ 
+
+module.exports = {cipolla_sqrt}
+
+
+
+
+var x = 0x743bcb585f9990edc2cfc4af84f6ff300729bb5facda28154362cd47a37de52fn;
+console.log(x.toString(16))
+var p = (1n &lt;&lt; 255n) - 19n;
+
+
+console.log(p.toString(16))
+
+x = BigInt(Math.floor(Math.random() * 10000))
+
+var y2 = ((x * x % p) * x % p + (486662n * x * x ) %p + x ) % p
+console.log(y2.toString(16))
+
+var z = cipolla_sqrt(y2,p)
+console.log('---')
+console.log(x.toString(16))
+console.log(z)
+
+// var p = 6741313;
+// var x = 288743;
+
+// var n = (((x * x % p) * x )% p + 7) %p
+
+// // y^2 = x^3 + ax + b mod Prime
+
+// var y = cipolla_sqrt(n,p);
+
+// var y2 = ((p - y) % p + p ) % p
+
+// console.log('N',n)
+// console.log(y,y2 )
+
+// console.log(y * y % p ,y2 &amp; y2 % p )
+
+</code></pre></div></div>
+
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

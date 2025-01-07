@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>GoCryptFs和网盘</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>GoCryptFs和网盘</h2><time datetime="2024-09-26 16:30:13 +0800">2024/09/26 Thu</time> &nbsp; &nbsp;<a href="/tags/流水账.html" class="tag"><text><nobr>#流水账</nobr></text>&nbsp;</a><a href="/tags/日常.html" class="tag"><text><nobr>#日常</nobr></text>&nbsp;</a><article><h1 id="世界就是一个草台班子">世界就是一个草台班子</h1>
+<p><a href="https://web.archive.org/web/20240925013910/https://www.sohu.com/a/810219123_121976271">阿里网盘bug，用户照片泄露</a></p>
+
+<p>阿里的回应也很简单明了， “影响用户不广，bug已经修复” 。</p>
+
+<h1 id="我的数据我做主">我的数据我做主</h1>
+
+<p>使用 GoCryptFs (windows 使用 <a href="https://github.com/bailey27/cppcryptfs">CppCryptFS</a>)<br />
+<a href="https://nuetzlich.net/gocryptfs/">GoCrytptFs 主页</a></p>
+<blockquote>
+  <p>软件本身是linux软件，号称支持mac，但是release包没有mac os 版本，需要自己下载编译</p>
+</blockquote>
+
+<p>会生成两个文件夹，一个是解密后的文件Plain ，一个是解密前Cipher</p>
+
+<p>Plain 文件夹可以自己使用，再此文件夹里面添加删除文件都能自动同步到 Cipher文件夹。</p>
+
+<p>这样，可以在百度、阿里网盘等网盘设置自动同步文件夹的时候，设置Cipher文件夹，这样网盘里面数据都是加密的，再怎么漏，都不怕。</p>
+
+<h1 id="加密会不会影响电脑性能">加密会不会影响电脑性能？</h1>
+<p>说完全不会不严谨，应该是几乎没有影响，默认使用AES模式加密，大多数现代处理器（2010 年后发布的产品）应该都集成了AES-NI指令，加密解密不会成为体验瓶颈。</p>
+
+<p><strong>解密是实时的，对于用户来说是透明的，不会造成双倍磁盘占用。</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>算法</th>
+      <th>吞吐</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AES-GCM-256-OpenSSL</td>
+      <td>N/A</td>
+    </tr>
+    <tr>
+      <td>AES-GCM-256-Go</td>
+      <td>5919.44 MB/s	(selected in auto mode)</td>
+    </tr>
+    <tr>
+      <td>AES-SIV-512-Go</td>
+      <td>544.17 MB/s</td>
+    </tr>
+    <tr>
+      <td>XChaCha20-Poly1305-OpenSSL</td>
+      <td>N/A</td>
+    </tr>
+    <tr>
+      <td>XChaCha20-Poly1305-Go</td>
+      <td>918.99 MB/s	(selected in auto mode)</td>
+    </tr>
+  </tbody>
+</table>
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

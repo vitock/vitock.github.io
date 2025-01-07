@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>一个身份证小技巧</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>一个身份证小技巧</h2><time datetime="2021-06-28 22:35:40 +0800">2021/06/28 Mon</time> &nbsp; &nbsp;<a href="/tags/流水账.html" class="tag"><text><nobr>#流水账</nobr></text>&nbsp;</a><a href="/tags/技巧.html" class="tag"><text><nobr>#技巧</nobr></text>&nbsp;</a><article><h2 id="有时候需要填写自己的身份证但是你又不情愿">有时候需要填写自己的身份证,但是你又不情愿</h2>
+<blockquote>
+  <p>上次体育馆做活动,免费羽毛球的场子，微信预定后,兴冲冲去现场,被告知要实名登记,报上身份证号码和姓名,虽然不情愿,但是还是报了身份证号码和假的姓名。<br />
+体育馆这么做可能是要最后核销成本，做补贴之类的需要吧
+但是，这些单位的IT系统，你懂的。并不是很放心，</p>
+</blockquote>
+
+<p>这时候需要输入一个虚假的身份证号码， 可以报一个假的身份证号码， <br />
+然而有些上心的系统（目测体育馆这个不会）会检测你的证件格式。 
+由于身份证格式是模11校验算法。</p>
+<blockquote>
+  <p>第9位权重6,第14位权重5</p>
+</blockquote>
+
+<p>我们只要改动 年份倒数第二位 +1或者-1<br />
+同时生日最后一位 +1或者-1  即可(上面是+1,这里也是+1,保持一致)</p>
+
+<h2 id="即年份加减10年生日加减1天月份不变"><strong>即,年份加减10年,生日加减1天,月份不变</strong></h2>
+<p>例如你的身份证是:<br />
+110101 <font color="red">**2020 0628**</font> 7739 <br />
+只需要将<br />
+2020 -&gt; 2010<br />
+0628 -&gt; 0627</p>
+
+<p>110101201006277739<br />
+这样就得到一个格式符合要求的身份证号码,<br />
+对方如果想校验真实性就得花钱去权威部门校验。</p>
+
+<p>希望能安慰到你<br />
+(现在姓名+身份证号泄露太严重了,太容易弄到手了)</p>
+
+<hr />
+
+<p>年龄+10可能不太合适,
+可以年龄 +-1 ,第15位 +-1</p>
+
+<p>110101<strong>2020</strong>0628<strong>7</strong>739 <br />
+变成<br />
+110101<strong>2021</strong>0628<strong>8</strong>739</p>
+
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

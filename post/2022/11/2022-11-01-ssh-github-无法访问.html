@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>ssh 22端口无法访 & 多账号登录</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>ssh 22端口无法访 & 多账号登录</h2><time datetime="2022-11-01 14:52:37 +0800">2022/11/01 Tue</time> &nbsp; &nbsp;<a href="/tags/工具.html" class="tag"><text><nobr>#工具</nobr></text>&nbsp;</a><a href="/tags/笔记.html" class="tag"><text><nobr>#笔记</nobr></text>&nbsp;</a><article><h1 id="22端口被封">22端口被封</h1>
+
+<p>最近几天github 无法push，本来以为是最近开会的原因，可是会开完了还是这样。</p>
+
+<p>网上搜了下，原来也<a href="https://v2ex.com/t/807649">有人遇到</a></p>
+
+<p>22端口被封了，通过443端口(https)，果然好了。</p>
+
+<p><a href="https://docs.github.com/cn/authentication/troubleshooting-ssh/using-ssh-over-the-https-port">using-ssh-over-the-https-port</a></p>
+
+<p>gitlab 也是一样</p>
+
+<p><code class="language-plaintext highlighter-rouge">~/.ssh/config</code>文件配置</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Host github.com
+    HostName ssh.github.com
+    Port 443
+    User git
+    IdentityFile ~/.ssh/id_rsa
+#另外的githu账号 git@github.com2:acc2/a.git
+Host github.com2 
+    HostName ssh.github.com
+    User git
+    Port 443
+    IdentityFile ~/.ssh/id_rsa_account2
+
+Host gitlab.com
+    HostName altssh.gitlab.com
+    Port 443
+    User git
+    IdentityFile ~/.ssh/id_rsa
+</code></pre></div></div>
+
+<h1 id="使用两个账号">使用两个账号</h1>
+
+<p>如上面配置
+把另外一个账号的链接改成 (修改@后面的域名)</p>
+<blockquote>
+  <p>git@github.com:accountname/project.git<br />
+git@github.com2:accountname/project.git</p>
+</blockquote>
+
+<p>指定对应的私钥</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Host github.com2 
+    HostName ssh.github.com
+    User git
+    Port 443
+    IdentityFile ~/.ssh/id_rsa_account2
+
+</code></pre></div></div>
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

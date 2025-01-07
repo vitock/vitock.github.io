@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>信息泄漏</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>信息泄漏</h2><time datetime="2022-07-04 13:58:26 +0800">2022/07/04 Mon</time> &nbsp; &nbsp;<a href="/tags/流水账.html" class="tag"><text><nobr>#流水账</nobr></text>&nbsp;</a><a href="/tags/日常.html" class="tag"><text><nobr>#日常</nobr></text>&nbsp;</a><a href="/tags/互联网.html" class="tag"><text><nobr>#互联网</nobr></text>&nbsp;</a><article><p>最近，先是爆出 “疑超星学习通数据泄漏，造成1.7亿人收到影响。”
+今天上网，看到v2ex上说，上海某权威部门的数据库（阿里云）密钥泄漏，22.3T数据泄漏，10多亿条数据… （估计是全国人民了，人在家中座，锅从天上来）</p>
+
+<p>我甚至不感到意外。（印象中，这些政府/国企部门的信息系统，很多都是给熟人找几个草台班子搭建的，给人一种不踏实感）</p>
+
+<p>看网上的来龙去脉，直接原因是某程序员不小心把数据库密钥写在博客里面了。（实际上，该博客也没什么，都是文档内容，然后粘贴一些业务代码…)</p>
+
+<p>这位程序员当然有错，他当然应该更小心。
+但是我们要看到，一个安全事故的发生，除了直接原因，背后有无数的隐患。</p>
+
+<p>如果这个10亿+数据泄漏是真的，那么起码有如下问题，</p>
+<ul>
+  <li>为什么代码和配置是混合在一起硬编码。（代码规范）</li>
+  <li>为什么程序员能直接操作这么大量的数据库。（数据权限）</li>
+  <li>为什么如此重要的数据直接放在公网而不做物理隔离？</li>
+  <li>为什么被人下载这么多数据，云厂商无报警机制？</li>
+  <li>相关项目是如何验收通过的，有安全审计的过程吗？</li>
+</ul>
+
+<p>政府单位采购招标，在我们一般人看来，都是关系户眼中的肥肉，他们只想怎么快点把钱搞到手。
+v2ex上有人接到一个公益付费项目，到他手里6500，包含前端后端，数据大屏以及以后一年的售后！</p>
+
+<p>以前经常有安全审计来公司提要求，给一些信息安全的整改建议，这类政府关键系统，更应该慎重。</p>
+
+<p>我们媒体都在吹嘘国内互联网数字化如何如何先进，现在看来，我们像一辆漏油的跑车，在高速路上狂奔了二十年。（当然其他国家说不定也是一样，只是速度慢一些）</p>
+
+<p>应该说，我们政府应该是想在信息安全上有所作为的，也出台了相应的法律法规。
+2018年出台密码法，2021年个人信息保护法颁布。这些都在法律层面对个人信息做了保护。
+但是实际实践中，很多单位都无视这点，对信息系统的建设缺乏专业的安全审计，漏洞百出。</p>
+
+<p>希望对信息系统的建设，我们的法律法规能完善，像桥梁工程一样，落实各个主体的责任，别到最后仅仅找一个写代码的背锅。</p>
+
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

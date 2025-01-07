@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><script type="text/x-mathjax-config">MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});</script>
+  <script type="text/javascript" async src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><title>Miller-Rabin素数测试算法</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>Miller-Rabin素数测试算法</h2><time datetime="2021-08-07 16:55:40 +0800">2021/08/07 Sat</time> &nbsp; &nbsp;<a href="/tags/加密.html" class="tag"><text><nobr>#加密</nobr></text>&nbsp;</a><a href="/tags/RSA.html" class="tag"><text><nobr>#RSA</nobr></text>&nbsp;</a><a href="/tags/ECC.html" class="tag"><text><nobr>#ECC</nobr></text>&nbsp;</a><a href="/tags/素数.html" class="tag"><text><nobr>#素数</nobr></text>&nbsp;</a><article><h2 id="miller-rabin素数测试算法">Miller-Rabin素数测试算法</h2>
+
+<p>已知费马定理 p 是素数</p>
+
+<p>\(a ^ {p -1} = 1 \pmod p  \tag{F}\)
+那么他的逆命题,如果上面式子,$p$ 是否是素数呢?<br />
+答案是否定的,但是我们可以通过不同的 $a$ 来测试来增加我们的确信度。</p>
+
+<p>但是，如果$p$很大,每次更换 $a$ 重新计算$a ^ {p-1}$ 代价有点大，科学家想到了加速办法。</p>
+
+<h3 id="二次探测">二次探测</h3>
+<p>如果 p 是素数</p>
+
+<p>\(x ^2 = 1 \pmod p\)
+的解只有 $1,p-1$
+\(x_1 = 1 \pmod p \\
+x_2 = -1 \pmod p\)</p>
+
+<p>有什么用?</p>
+
+<p>看到2次方了吗,这个我们可以利用起来逐级降次(逐次开方),或者自底向上逐渐升次。</p>
+
+<p>对于每个＞2的素数, $p-1 = 2 ^ k  \times s$ 
+测试</p>
+<ol>
+  <li>随机选取一个数 $a &lt; p$;</li>
+  <li>计算初始值  $x = a ^ s \pmod{p}$
+    <ol>
+      <li>如果 $x = 1 \quad 或者 \quad x = p-1 \quad 即x= -1 \pmod p$ ，说明肯定满足 $a^p-1 = 1 \pmod p$ ,后面继续平方结果肯定也是1,那么通过测试。</li>
+      <li>如果 $x \not =\pm1 \pmod p$  那么逐次升幂测试(最多$k$次,不能超过 $a^{p-1}$),后面还有机会通过。
+        <ol>
+          <li>StepA:$x = x ^ 2  \pmod p$
+            <ul>
+              <li>如果 $x \not =\pm1 \pmod p$ ,继续步骤StepA,但是总平方次数不能超过 $k$次</li>
+              <li>如果 $x =\pm1 \pmod p$,那么通过测试。</li>
+            </ul>
+          </li>
+        </ol>
+      </li>
+    </ol>
+  </li>
+  <li>如果总的平方次数到 $k$次了,依然没有通过,那么,这就是个合数,中断</li>
+  <li>根据需要,如果需要增加可信度,再走一次 步骤1</li>
+</ol>
+
+<h2 id="例子">例子</h2>
+
+<p>我们检验 $p = 541$<br />
+$p -1 =  2 ^ 2 * 135$</p>
+<ol>
+  <li>随机选择 a = 154
+    <ol>
+      <li>$a ^ {135} \pmod{541} = 540$ 通过</li>
+    </ol>
+  </li>
+  <li>随机 a = 2
+    <ol>
+      <li>$a ^ {135} \pmod{541} = 52$</li>
+      <li>$52 ^ 2 \pmod{541} = 540$ 通过</li>
+    </ol>
+  </li>
+  <li>随机 a = 19
+    <ol>
+      <li>$a ^ {135} \pmod{541} = 540$ 通过</li>
+    </ol>
+  </li>
+</ol>
+
+<p>…</p>
+
+<p>下面是 计算 1000以内的素数个数 ,只是原理验证,类型用的 JavaScript 内建的Number,大小有限制</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>function isPrime(p){
+    if (p &lt; 2) {
+        return false;
+    }
+    function testPrime( a,p){
+        
+        /**
+         * 计算 a ^2^k mod p
+         */
+        function pow(a,k,p){
+            var z = 0
+            while(z ++  &lt; k){
+                a = a * a %p
+            }
+            return a ;
+        }
+
+        /**
+         * 计算 arr[0] * arr[x] mod p
+         */
+        function mods(p,arr){
+            var z = arr[0] % p;
+            for (let index = 1; index &lt; arr.length; index++) {  
+                const element = arr[index]; 
+                z = z * element % p
+            }
+            return z;
+        }
+
+ 
+        // 分解 p-1 = 2 ^K  * s
+        var p_1 = p-1;
+        var s = 1;
+        var K = 0;
+        var rightShift = 0;
+        while((p_1 &gt;&gt;rightShift &amp; 1) == 0 &amp;&amp; (p_1 &gt;&gt;rightShift)){
+            rightShift ++ ;
+        }
+        s = p_1 &gt;&gt; rightShift;
+        K = rightShift;
+
+
+        /// 分解 s = 2 ^x1 + 2 ^x2 ...
+        /// 直接读取二进制位
+        var m = [];
+        var k0 = 0 ,tmp = s;
+        while(tmp &gt; 0 ){
+            const z = tmp &amp; 1;
+            if (z) {
+                m.push(pow(a,k0,p));
+            }
+            k0 ++ ;
+            tmp = tmp &gt;&gt; 1;
+        }
+
+
+        // 计算 ss = a ^s
+        var ss = mods(p,m);
+        // 逐步测试 ss ^2  = 1 ,-1 mod p
+        while (ss !== 1 &amp;&amp; ss !== p_1 &amp;&amp; K -- &gt; 0){
+            ss = ss * ss % p;
+        }
+        return ss == 1 || ss == p_1  
+    }
+    this.testPrime = testPrime;
+
+
+    if (!p) {
+        return false;
+    }
+    /**
+     * 使用这些数作为测试数,出错概率几乎为0
+     *   3,825,123,056,546,413,051 是第一个反例,伪证
+     */
+    var testNumbers = [2,3,5,7,11,13,17,19,23]
+    for (let index = 0; index &lt; testNumbers.length  ; index++) {
+        var  a =   testNumbers[index];
+        const testResult = testPrime(a,p);
+        if(!testResult){
+            // console.log('测试不通过',`${a } ${p }  ${testResult}`);
+            return false;
+        }
+    }
+    return true;
+}
+
+module.exports = isPrime
+
+
+// var c = 0,p = 1;
+// var arr = []
+// while(p++ &lt; 10000){
+//     if(isPrime(p)){
+//         c ++ ;
+//         arr.push(p);
+//     }
+// }
+ 
+// console.log(c);
+
+
+
+</code></pre></div></div>
+
+<blockquote>
+  <p>看到AKS算法,也是多项式时间,<strong>但是是确定性的算法</strong>。<a href="https://baike.baidu.com/item/AKS%E7%B4%A0%E6%95%B0%E6%B5%8B%E8%AF%95/22735657">AKS</a></p>
+</blockquote>
+
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

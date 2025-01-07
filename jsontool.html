@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>JSONString自动格式化</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>JSONString自动格式化</h2><time datetime="2024-10-30 09:55:42 +0800">2024/10/30 Wed</time> &nbsp; &nbsp;<a href="/tags/流水账.html" class="tag"><text><nobr>#流水账</nobr></text>&nbsp;</a><a href="/tags/工具.html" class="tag"><text><nobr>#工具</nobr></text>&nbsp;</a><article><h1 id="自动把-json-格式的字符串转换成对象">自动把 json 格式的字符串转换成对象</h1>
+
+<p>嵌套实在是太烦了</p>
+
+<blockquote>
+  <p>会记录上次的输入，<del>要清空的话，删除 input，再格式化一次就行了</del><br />
+jsonstring 前面不要有空白字符，直接 { 或者 [ 打头</p>
+</blockquote>
+
+<textarea id="input" spellcheck="false" placeholder="输入"> </textarea>
+<p><span class="row">
+ <button onclick="fmt()"> 格式化 </button><br />
+ <button onclick="cpy()"> 拷贝 </button><br />
+ <button onclick="clearHistory()"> 清空记录 </button><br />
+ </span></p>
+<textarea id="output" placeholder="output" spellcheck="false" readonly=""> </textarea>
+
+<style>
+    textarea{
+        width:100%;
+        height:800px;
+    }
+    #input{
+        height: 300px;
+        border-radius:5px;
+    }
+    #clear{
+       background-color:#57c3c2;
+    }
+    #output{
+        background-color: #334;
+        color: #eef;
+        border-radius:5px;
+    }
+    button{
+        font-size:1.2em;
+        border-radius:8px;
+        min-width:12rem;
+
+        background-color:#112;
+        padding:10px 20px;
+        color:#fff;
+        display:inline-block;
+        margin-left:2rem;
+    }
+    .row{
+      display:flex;
+      width:100%;
+      justify-content: space-around;
+
+      
+    }
+</style>
+
+<script>
+function deepConvert(obj) {
+if(obj === null) return null
+if(obj === undefined) return undefined
+if (typeof obj == "string") {
+  return InnerStr2Obj(obj);
+}
+if (Array.isArray(obj)) {
+  let arr = obj;
+  let arrOut = [];
+  for (let i = 0; i < arr.length; i++) {
+    const element = arr[i];
+    if (typeof element == "string") {
+      arrOut.push(InnerStr2Obj(element));
+    } else {
+      arrOut.push(deepConvert(element));
+    }
+  }
+  return arrOut;
+} else if(typeof obj == 'object'){
+  let objOut = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const element = obj[key];
+
+      if (typeof element == "string") {
+        objOut[key] = InnerStr2Obj(element);
+      } else {
+        objOut[key] = deepConvert(element);
+      }
+    }
+  }
+
+  return objOut;
+}
+
+return obj
+}
+function InnerStr2Obj(str) {
+if(str === null) return null
+if(str === undefined) return undefined
+if (str.substring(0, 1) == "{") {
+  try {
+    let obj = JSON.parse(str);
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        const element = obj[key];
+
+        if (typeof element == "string") {
+          obj[key] = InnerStr2Obj(element);
+        } else {
+          obj[key] = deepConvert(element)
+        }
+      }
+    }
+
+    return obj;
+  } catch (error) {}
+} else if (str.substring(0, 1) == "[") {
+  try {
+    let arr = JSON.parse(str);
+    let arrOut = [];
+    for (let i = 0; i < arr.length; i++) {
+      const element = arr[i];
+      console.log(typeof element);
+      if (typeof element == "string") {
+        arrOut.push(InnerStr2Obj(element));
+      } else {
+        arrOut.push(element);
+      }
+    }
+
+    return arrOut;
+  } catch (error) {}
+}
+
+return str;
+}
+
+const historyKey = 'HISTORY2024'
+ 
+var histxt = localStorage.getItem(historyKey)
+if (histxt) {
+    document.getElementById('input').value = histxt
+
+    setTimeout(() => {
+        fmt()
+    }, 100);
+}else{
+}
+
+function fmt(){
+    var a = document.getElementById('input').value;
+    if (!a) {
+        localStorage.setItem(historyKey, '');
+        document.getElementById('output').value = ''
+        return
+    }
+    try {
+        var obj = deepConvert(JSON.parse(a))      
+        localStorage.setItem(historyKey, a);
+    } catch (error) {
+        document.getElementById('output').value = error
+        return
+    }
+    
+    document.getElementById('output').value = JSON.stringify(obj,null,4)
+}
+
+function cpy(){
+  let r = document.getElementById('output').value 
+  navigator.clipboard.writeText(r).then(
+  function () {
+    console.log('succ')
+    /* clipboard successfully set */
+  },
+  function () {
+    /* clipboard write failed */
+  },
+);}
+
+
+function clearHistory(){
+  localStorage.setItem(historyKey, '');
+  document.getElementById('input').value = ''
+  document.getElementById('output').value = ''
+}
+
+</script>
+
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

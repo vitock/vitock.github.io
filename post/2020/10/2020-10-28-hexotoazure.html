@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>hexo 从 travis 迁移到 azure devops</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>hexo 从 travis 迁移到 azure devops</h2><time datetime="2020-10-28 22:22:42 +0800">2020/10/28 Wed</time> &nbsp; &nbsp;<a href="/tags/流水账.html" class="tag"><text><nobr>#流水账</nobr></text>&nbsp;</a><article><h1 id="travis-太慢">travis 太慢</h1>
+<p>git push后,经常travis要排队很久,可能是白嫖党太多了?</p>
+
+<p>而且只支持public的repo,其实我只想把生成的html 公开,原始的markdown文件,和一些其他文件不想公开。
+试试巨硬(Microsoft)的azure devops ，好在配置还算简单，直接开干</p>
+
+<p>把原始的文件提交到一个新的私有分支,通过azure pipline 绑定,</p>
+
+<p>另外发现 devops还能cache
+支持cache,可以把node_modules缓存起来,加快速度.
+不过,cache只有7天有效期,对于不经常写的人,好像也没什么用。</p>
+
+<hr />
+<p>迁移到gitee 试试,可能会快一点.</p>
+
+<p>好像不能自动部署?</p>
+
+<p>2020-11-01 更新…
+<strong>真的不能自动部署!</strong></p>
+
+<p>目前用的脚本自动运行一次,就是不知道token cookie什么时候过期,到时候再说吧。</p>
+
+<p><a href="/about/">发布状态</a></p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">variables</span><span class="pi">:</span>
+  <span class="na">npm_config_cache</span><span class="pi">:</span> <span class="s">$(Build.SourcesDirectory)/node_modules</span>
+<span class="c1"># 省略若干</span>
+<span class="c1"># 省略若干</span>
+<span class="c1"># 省略若干</span>
+
+
+<span class="pi">-</span> <span class="na">task</span><span class="pi">:</span> <span class="s">Cache@2</span>
+  <span class="na">inputs</span><span class="pi">:</span>
+    <span class="na">key</span><span class="pi">:</span> <span class="s1">'</span><span class="s">version0</span><span class="nv"> </span><span class="s">|npm</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">"$(Agent.OS)"</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">package-lock.json'</span>
+    <span class="na">restoreKeys</span><span class="pi">:</span> <span class="pi">|</span>
+       <span class="s">npm | "$(Agent.OS)"</span>
+    <span class="na">path</span><span class="pi">:</span> <span class="s">$(npm_config_cache)</span>
+    <span class="na">cacheHitVar</span><span class="pi">:</span> <span class="s">IS_NPM_MODULE_CACHED</span>
+  <span class="na">displayName</span><span class="pi">:</span> <span class="s">Cache npm</span>
+  
+  <span class="pi">-</span> <span class="na">script</span><span class="pi">:</span> <span class="pi">|</span>
+      <span class="s">echo 'found no cache'</span>
+      <span class="s">npm install</span>
+    <span class="na">condition</span><span class="pi">:</span> <span class="s">ne(variables.IS_NPM_MODULE_CACHED, 'true')</span>
+    <span class="na">displayName</span><span class="pi">:</span> <span class="s1">'</span><span class="s">npm</span><span class="nv"> </span><span class="s">install'</span>
+  <span class="pi">-</span> <span class="na">script</span><span class="pi">:</span> <span class="pi">|</span>
+        <span class="s">echo 'found cache and npm install skiped '</span>
+    <span class="na">condition</span><span class="pi">:</span> <span class="s">eq(variables.IS_NPM_MODULE_CACHED, 'true')</span>
+    <span class="na">displayName</span><span class="pi">:</span> <span class="s1">'</span><span class="s">skip</span><span class="nv"> </span><span class="s">npm</span><span class="nv"> </span><span class="s">install'</span>
+</code></pre></div></div>
+
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

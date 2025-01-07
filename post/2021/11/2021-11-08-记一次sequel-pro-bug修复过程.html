@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>记一次sequel pro bug修复过程</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>记一次sequel pro bug修复过程</h2><time datetime="2021-11-08 19:25:24 +0800">2021/11/08 Mon</time> &nbsp; &nbsp;<a href="/tags/流水账.html" class="tag"><text><nobr>#流水账</nobr></text>&nbsp;</a><article><h2 id="sequel-pro-不能用">sequel pro 不能用。</h2>
+<p>本来,用的是sequel pro，很小巧，6M大小，功能够用,岁月静好,现世安稳。
+后来，由于一些原因，公司的数据库链接做了改动，用户名50个字符，包含邮箱和密码md5等等信息。 
+一般的数据库软件不能用，
+于是转用navicat premium ，换驱动什么的，用了一段时间，再后来，公司要求卸载盗版软件。 <br />
+没得法，只得照办，其实也是忍了很久了，这软件做的太大了，几百兆，老是无响应。
+于是，再次抱着试试心态，尝试用回sequel pro，果然，还是不行，提示用户名和密码错误。</p>
+
+<p>搜了下github，这是开源软件，但是很久没维护了，提了issue 没人理会。 
+尝试自己修改下，因为我大概猜到了原因，可能是用户名的缓冲区太小，截断了。 找公司数据库同学看了日志，果然，是被截断了。</p>
+
+<h2 id="尝试修改源代码">尝试修改源代码</h2>
+<p>clone sequel pro最新代码，编译，Ok，但是也连不上。
+全局搜索 “username”,想看看有没有地方限制了用户名长度， 发现一堆代码,抽丝剥茧,发现数据库链接用的 SPMySQLFramework 这个库,<br />
+好,再看看这个库,好在也是在工程中提供源代码,<br />
+再一层层的分析,<br />
+发现这个库最后使用的是 libmysqlclint.a 这个静态库</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>MYSQL *		STDCALL mysql_real_connect(MYSQL *mysql, const char *host,
+                const char *user,
+                const char *passwd,
+                const char *db,
+                unsigned int port,
+                const char *unix_socket,
+                unsigned long clientflag);
+</code></pre></div></div>
+
+<p>估计,是这个函数出现了问题,再从头文件 “mysql_com.h”中发现</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+#define SYSTEM_CHARSET_MBMAXLEN 3
+#define NAME_CHAR_LEN	64              /* Field/table name length */
+#define USERNAME_CHAR_LENGTH 16
+#define NAME_LEN                (NAME_CHAR_LEN*SYSTEM_CHARSET_MBMAXLEN)
+</code></pre></div></div>
+<p>好家伙, <strong>USERNAME_CHAR_LENGTH</strong> 限制的16字节，难怪被截断了。</p>
+
+<p>大概找到病根了，那么再搜下 libmysqlclient 这个库。<br />
+发现是属于mysql 官方自带的一个库，mysql 既然是开源的，那么应该能下载源代码。
+最后根据stackoverflow 上看到的回答，下载到了 <code class="language-plaintext highlighter-rouge">mysql-5.5.56.tar.gz</code> 版本源代码。<br />
+为啥不下最新的? <br />
+从sequel pro 日志上看到，他们用的就是这个版本，本着未免夜长梦多最小改动，能用就行的原则，只下载当前版本就行。</p>
+
+<p>下载之后，修改了 USERNAME_CHAR_LENGTH = 200，这个宏，一顿摸索cmake用法，编译成功。<br />
+获得libmysqlclient.a 奖励一枚。</p>
+
+<h2 id="对症下药">对症下药</h2>
+<p>将原工程中 获得libmysqlclient.a 替换成刚刚编译的库， cmd + r ，准备run。<br />
+啪的打脸，N多 符号未定义错误，什么纯虚函数之类云云。天可怜见，我只是改了个buffer啊，为什么要这么对我。<br />
+冷静，冷静，第一时间想到的是把这些mysql源码中纯虚类删掉，可是这工作量未免太大，还不知道能不能编译成功。<br />
+先网上搜搜看，果然有人遇到，编译器的问题，只要吧用到libmysqlclient方法的类，改成 mm后缀,即oc + cpp 模式就行。
+试了下，果然不报错了。</p>
+
+<p>运行起来后，test connection  成功。</p>
+
+<h2 id="高兴的太早了">高兴的太早了</h2>
+<p>查log 什么的都ok,中文乱码,通过修改编码为 utf8 full unicode。Done</p>
+
+<p>修改配置文件，发现不能编辑，没有编辑按钮，最初服务器升级前是可以编辑的啊，疑惑ing</p>
+
+<p>断点调试，通过关键字搜索，发现编辑属性是由于</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- (NSArray*)fieldEditStatusForRow:(NSInteger)rowIndex andColumn:(NSInteger)columnIndex; 
+</code></pre></div></div>
+<p>抛出异常,进一步发现由于</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Actual check whether field can be identified bijectively 
+SPMySQLResult *tempResult = [mySQLConnection queryString:[NSString stringWithFormat:@"SELECT COUNT(1) FROM %@.%@ %@ ",
+  [[columnDefinition objectForKey:@"db"] backtickQuotedString],
+  [tableForColumn backtickQuotedString],
+  fieldIDQueryStr]];
+
+if ([mySQLConnection queryErrored]) {
+  [tableDocumentInstance endTask];
+  return @[@(-1), @""];
+}
+</code></pre></div></div>
+<p>中 select 这句报错了，刹那间，我领悟了，wm 在数据库端做了限制，每个sql 必须加上 limit ，否则报错。</p>
+
+<p><strong>加上limit 100 成</strong></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Actual check whether field can be identified bijectively 
+SPMySQLResult *tempResult = [mySQLConnection queryString:[NSString stringWithFormat:@"SELECT COUNT(1) FROM %@.%@ %@ limit 100",
+  [[columnDefinition objectForKey:@"db"] backtickQuotedString],
+  [tableForColumn backtickQuotedString],
+  fieldIDQueryStr]];
+
+if ([mySQLConnection queryErrored]) {
+  [tableDocumentInstance endTask];
+  return @[@(-1), @""];
+}
+</code></pre></div></div>
+
+<p>再次运行，一切正常。查询编辑什么的都OK</p>
+
+<p>经历这么久，回到起点，还是用回了 sequel pro，做最初的自己。:)</p>
+
+<h1 id="其他">其他</h1>
+<p>其实，在github上提issue，也有好心人提说我用 sequel pro ace，这个也是基于sequel pro 开发的。<br />
+但此软件上游也是用的libmysqlclient.a，应该也会存在用户名截断的问题。
+虽然没有解决问题,但好心人的热心还是令人感动。</p>
+<blockquote>
+  <p>这些改动专门针对的公司hl自己的数据库配置，就不提交pr了。</p>
+</blockquote>
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>iPhone/Mac设置DoH&DoT</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>iPhone/Mac设置DoH&DoT</h2><time datetime="2022-10-25 12:57:14 +0800">2022/10/25 Tue</time> &nbsp; &nbsp;<a href="/tags/流水账.html" class="tag"><text><nobr>#流水账</nobr></text>&nbsp;</a><a href="/tags/日常.html" class="tag"><text><nobr>#日常</nobr></text>&nbsp;</a><a href="/tags/工具.html" class="tag"><text><nobr>#工具</nobr></text>&nbsp;</a><article><h1 id="总览">总览</h1>
+
+<p><a href="https://coding.gs/2024/06/09/available-doh/">这篇blog持续更新 👍</a></p>
+
+<blockquote>
+  <p>本机Chales 抓包 经常卡住，怀疑是DoH造成，毕竟抓了本机所有的https流量<br />
+使用 DoH 吧</p>
+</blockquote>
+
+<p>DoH: DNS over https <br />
+DoT: DNS over TLS</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center">\</th>
+      <th style="text-align: center">DoH</th>
+      <th style="text-align: center">DoT</th>
+      <th style="text-align: center"> </th>
+      <th> </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: center">阿里DNS</td>
+      <td style="text-align: center"><a href="/static/dns/alibaba-https.mobileconfig">下载</a></td>
+      <td style="text-align: center"><a href="/static/dns/alibaba-tls.mobileconfig">下载</a></td>
+      <td style="text-align: center"> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td style="text-align: center">DNSPod</td>
+      <td style="text-align: center"><a href="/static/dns/dnspod-https.mobileconfig">下载</a></td>
+      <td style="text-align: center"><a href="/static/dns/dnspod-tls.mobileconfig">下载</a></td>
+      <td style="text-align: center"> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td style="text-align: center">Google</td>
+      <td style="text-align: center"><a href="/static/dns/google-https.mobileconfig">下载</a></td>
+      <td style="text-align: center"><a href="/static/dns/google-tls.mobileconfig">下载</a></td>
+      <td style="text-align: center"> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td style="text-align: center">CloudFlare</td>
+      <td style="text-align: center"><a href="/static/dns/cloudflare-https.mobileconfig">下载</a></td>
+      <td style="text-align: center"><a href="/static/dns/cloudflare-tls.mobileconfig">下载</a></td>
+      <td style="text-align: center"> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td style="text-align: center">&lt;!–</td>
+      <td style="text-align: center">apad</td>
+      <td style="text-align: center"><a href="javascript:genDoHCfg('https://doh.apad.pro/dns-query')">下载</a></td>
+      <td style="text-align: center">–</td>
+      <td>网友自建的 –&gt;</td>
+    </tr>
+  </tbody>
+</table>
+
+<h1 id="细节">细节</h1>
+<h2 id="阿里dns-doh"><a href="/static/dns/alibaba-https.mobileconfig">阿里DNS DoH</a></h2>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+&lt;dict&gt;
+	&lt;key&gt;PayloadContent&lt;/key&gt;
+	&lt;array&gt;
+		&lt;dict&gt;
+			&lt;key&gt;DNSSettings&lt;/key&gt;
+			&lt;dict&gt;
+				&lt;key&gt;DNSProtocol&lt;/key&gt;
+				&lt;string&gt;HTTPS&lt;/string&gt;
+				&lt;key&gt;ServerAddresses&lt;/key&gt;
+				&lt;array&gt;
+					&lt;string&gt;2400:3200::1&lt;/string&gt;
+					&lt;string&gt;2400:3200:baba::1&lt;/string&gt;
+					&lt;string&gt;223.5.5.5&lt;/string&gt;
+					&lt;string&gt;223.6.6.6&lt;/string&gt;
+				&lt;/array&gt;
+				&lt;key&gt;ServerURL&lt;/key&gt;
+				&lt;string&gt;https://dns.alidns.com/dns-query&lt;/string&gt;
+			&lt;/dict&gt;
+			&lt;key&gt;PayloadDescription&lt;/key&gt;
+			&lt;string&gt;Configures device to use AliDNS Encrypted DNS over TLS&lt;/string&gt;
+			&lt;key&gt;PayloadDisplayName&lt;/key&gt;
+			&lt;string&gt;AliDNS DNS over HTTPS&lt;/string&gt;
+			&lt;key&gt;PayloadIdentifier&lt;/key&gt;
+			&lt;string&gt;com.apple.dnsSettings.managed.9d6e5fdf-e404-4f34-ae94-27ed2f636ac4&lt;/string&gt;
+			&lt;key&gt;PayloadType&lt;/key&gt;
+			&lt;string&gt;com.apple.dnsSettings.managed&lt;/string&gt;
+			&lt;key&gt;PayloadUUID&lt;/key&gt;
+			&lt;string&gt;35d5c8a0-afa6-4b36-a9fe-099a997b44ad&lt;/string&gt;
+			&lt;key&gt;PayloadVersion&lt;/key&gt;
+			&lt;integer&gt;1&lt;/integer&gt;
+			&lt;key&gt;ProhibitDisablement&lt;/key&gt;
+			&lt;false/&gt;
+		&lt;/dict&gt;
+	&lt;/array&gt;
+	&lt;key&gt;PayloadDescription&lt;/key&gt;
+	&lt;string&gt;Adds the AliDNS to Big Sur and iOS 14 based systems&lt;/string&gt;
+	&lt;key&gt;PayloadDisplayName&lt;/key&gt;
+	&lt;string&gt;AliDNS over HTTPS&lt;/string&gt;
+	&lt;key&gt;PayloadIdentifier&lt;/key&gt;
+	&lt;string&gt;com.paulmillr.apple-dns.ali&lt;/string&gt;
+	&lt;key&gt;PayloadRemovalDisallowed&lt;/key&gt;
+	&lt;false/&gt;
+	&lt;key&gt;PayloadType&lt;/key&gt;
+	&lt;string&gt;Configuration&lt;/string&gt;
+	&lt;key&gt;PayloadUUID&lt;/key&gt;
+	&lt;string&gt;A4475135-633A-4F15-A79B-BE15093DC97A&lt;/string&gt;
+	&lt;key&gt;PayloadVersion&lt;/key&gt;
+	&lt;integer&gt;1&lt;/integer&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;
+
+</code></pre></div></div>
+
+<h2 id="阿里dns-dot"><a href="/static/dns/alibaba-tls.mobileconfig">阿里DNS DoT</a></h2>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+&lt;dict&gt;
+	&lt;key&gt;PayloadContent&lt;/key&gt;
+	&lt;array&gt;
+		&lt;dict&gt;
+			&lt;key&gt;DNSSettings&lt;/key&gt;
+			&lt;dict&gt;
+				&lt;key&gt;DNSProtocol&lt;/key&gt;
+				&lt;string&gt;TLS&lt;/string&gt;
+				&lt;key&gt;ServerAddresses&lt;/key&gt;
+				&lt;array&gt;
+					&lt;string&gt;2400:3200::1&lt;/string&gt;
+					&lt;string&gt;2400:3200:baba::1&lt;/string&gt;
+					&lt;string&gt;223.5.5.5&lt;/string&gt;
+					&lt;string&gt;223.6.6.6&lt;/string&gt;
+				&lt;/array&gt;
+				&lt;key&gt;ServerName&lt;/key&gt;
+				&lt;string&gt;dns.alidns.com&lt;/string&gt;
+			&lt;/dict&gt;
+			&lt;key&gt;PayloadDescription&lt;/key&gt;
+			&lt;string&gt;Configures device to use AliDNS Encrypted DNS over TLS&lt;/string&gt;
+			&lt;key&gt;PayloadDisplayName&lt;/key&gt;
+			&lt;string&gt;AliDNS DNS over TLS&lt;/string&gt;
+			&lt;key&gt;PayloadIdentifier&lt;/key&gt;
+			&lt;string&gt;com.apple.dnsSettings.managed.9d6e5fdf-e404-4f34-ae94-27ed2f636ac4&lt;/string&gt;
+			&lt;key&gt;PayloadType&lt;/key&gt;
+			&lt;string&gt;com.apple.dnsSettings.managed&lt;/string&gt;
+			&lt;key&gt;PayloadUUID&lt;/key&gt;
+			&lt;string&gt;35d5c8a0-afa6-4b36-a9fe-099a997b44ad&lt;/string&gt;
+			&lt;key&gt;PayloadVersion&lt;/key&gt;
+			&lt;integer&gt;1&lt;/integer&gt;
+			&lt;key&gt;ProhibitDisablement&lt;/key&gt;
+			&lt;false/&gt;
+		&lt;/dict&gt;
+	&lt;/array&gt;
+	&lt;key&gt;PayloadDescription&lt;/key&gt;
+	&lt;string&gt;Adds the AliDNS to Big Sur and iOS 14 based systems&lt;/string&gt;
+	&lt;key&gt;PayloadDisplayName&lt;/key&gt;
+	&lt;string&gt;AliDNS over TLS&lt;/string&gt;
+	&lt;key&gt;PayloadIdentifier&lt;/key&gt;
+	&lt;string&gt;com.paulmillr.apple-dns.tlsalibab&lt;/string&gt;
+	&lt;key&gt;PayloadRemovalDisallowed&lt;/key&gt;
+	&lt;false/&gt;
+	&lt;key&gt;PayloadType&lt;/key&gt;
+	&lt;string&gt;Configuration&lt;/string&gt;
+	&lt;key&gt;PayloadUUID&lt;/key&gt;
+	&lt;string&gt;6C7F342C-930C-49D7-8FFF-750F38CE39DD&lt;/string&gt;
+	&lt;key&gt;PayloadVersion&lt;/key&gt;
+	&lt;integer&gt;1&lt;/integer&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;
+
+</code></pre></div></div>
+
+<h2 id="dnspod-doh"><a href="/static/dns/dnspod-https.mobileconfig">DNSPod DoH</a></h2>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+&lt;dict&gt;
+	&lt;key&gt;PayloadContent&lt;/key&gt;
+	&lt;array&gt;
+		&lt;dict&gt;
+			&lt;key&gt;DNSSettings&lt;/key&gt;
+			&lt;dict&gt;
+				&lt;key&gt;DNSProtocol&lt;/key&gt;
+				&lt;string&gt;HTTPS&lt;/string&gt;
+				&lt;key&gt;ServerAddresses&lt;/key&gt;
+				&lt;array&gt;
+					&lt;string&gt;1.12.12.12&lt;/string&gt;
+					&lt;string&gt;120.53.53.53&lt;/string&gt;
+				&lt;/array&gt;
+				&lt;key&gt;ServerURL&lt;/key&gt;
+				&lt;string&gt;https://doh.pub/dns-query&lt;/string&gt;
+			&lt;/dict&gt;
+			&lt;key&gt;PayloadDescription&lt;/key&gt;
+			&lt;string&gt;Configures device to use DNSPod Encrypted DNS over HTTPS&lt;/string&gt;
+			&lt;key&gt;PayloadDisplayName&lt;/key&gt;
+			&lt;string&gt;DNSPod over HTTPS&lt;/string&gt;
+			&lt;key&gt;PayloadIdentifier&lt;/key&gt;
+			&lt;string&gt;com.apple.dnsSettings.managed.C498EC0C-EF6C-44F0-BFB7-0000658B99AC&lt;/string&gt;
+			&lt;key&gt;PayloadType&lt;/key&gt;
+			&lt;string&gt;com.apple.dnsSettings.managed&lt;/string&gt;
+			&lt;key&gt;PayloadUUID&lt;/key&gt;
+			&lt;string&gt;065AB183-5E34-4794-9BEB-B5327CF61F27&lt;/string&gt;
+			&lt;key&gt;PayloadVersion&lt;/key&gt;
+			&lt;integer&gt;1&lt;/integer&gt;
+			&lt;key&gt;ProhibitDisablement&lt;/key&gt;
+			&lt;false/&gt;
+		&lt;/dict&gt;
+	&lt;/array&gt;
+	&lt;key&gt;PayloadDescription&lt;/key&gt;
+	&lt;string&gt;Adds the DNSPod to Big Sur and iOS 14 based systems&lt;/string&gt;
+	&lt;key&gt;PayloadDisplayName&lt;/key&gt;
+	&lt;string&gt;DNSPod over HTTPS&lt;/string&gt;
+	&lt;key&gt;PayloadIdentifier&lt;/key&gt;
+	&lt;string&gt;com.paulmillr.apple-dns.dnspod&lt;/string&gt;
+	&lt;key&gt;PayloadRemovalDisallowed&lt;/key&gt;
+	&lt;false/&gt;
+	&lt;key&gt;PayloadType&lt;/key&gt;
+	&lt;string&gt;Configuration&lt;/string&gt;
+	&lt;key&gt;PayloadUUID&lt;/key&gt;
+	&lt;string&gt;030E6D6F-69A2-4515-9D77-99342CB9AE76&lt;/string&gt;
+	&lt;key&gt;PayloadVersion&lt;/key&gt;
+	&lt;integer&gt;1&lt;/integer&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;
+
+</code></pre></div></div>
+
+<h2 id="dnspod-dot"><a href="/static/dns/dnspod-tls.mobileconfig">DNSPod DoT</a></h2>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+&lt;dict&gt;
+	&lt;key&gt;PayloadContent&lt;/key&gt;
+	&lt;array&gt;
+		&lt;dict&gt;
+			&lt;key&gt;DNSSettings&lt;/key&gt;
+			&lt;dict&gt;
+				&lt;key&gt;DNSProtocol&lt;/key&gt;
+				&lt;string&gt;TLS&lt;/string&gt;
+				&lt;key&gt;ServerAddresses&lt;/key&gt;
+				&lt;array&gt;
+					&lt;string&gt;1.12.12.12&lt;/string&gt;
+					&lt;string&gt;120.53.53.53&lt;/string&gt;
+				&lt;/array&gt;
+				&lt;key&gt;ServerName&lt;/key&gt;
+				&lt;string&gt;dot.pub&lt;/string&gt;
+			&lt;/dict&gt;
+			&lt;key&gt;PayloadDescription&lt;/key&gt;
+			&lt;string&gt;Configures device to use DNSPod Encrypted DNS over TLS&lt;/string&gt;
+			&lt;key&gt;PayloadDisplayName&lt;/key&gt;
+			&lt;string&gt;DNSPod over TLS&lt;/string&gt;
+			&lt;key&gt;PayloadIdentifier&lt;/key&gt;
+			&lt;string&gt;com.apple.dnsSettings.managed.C498EC0C-EF6C-44F0-BFB7-0000658B99AC&lt;/string&gt;
+			&lt;key&gt;PayloadType&lt;/key&gt;
+			&lt;string&gt;com.apple.dnsSettings.managed&lt;/string&gt;
+			&lt;key&gt;PayloadUUID&lt;/key&gt;
+			&lt;string&gt;065AB183-5E34-4794-9BEB-B5327CF61F27&lt;/string&gt;
+			&lt;key&gt;PayloadVersion&lt;/key&gt;
+			&lt;integer&gt;1&lt;/integer&gt;
+			&lt;key&gt;ProhibitDisablement&lt;/key&gt;
+			&lt;false/&gt;
+		&lt;/dict&gt;
+	&lt;/array&gt;
+	&lt;key&gt;PayloadDescription&lt;/key&gt;
+	&lt;string&gt;Adds the DNSPod to Big Sur and iOS 14 based systems&lt;/string&gt;
+	&lt;key&gt;PayloadDisplayName&lt;/key&gt;
+	&lt;string&gt;DNSPod over TLS&lt;/string&gt;
+	&lt;key&gt;PayloadIdentifier&lt;/key&gt;
+	&lt;string&gt;com.paulmillr.apple-dns.tlsdnspod&lt;/string&gt;
+	&lt;key&gt;PayloadRemovalDisallowed&lt;/key&gt;
+	&lt;false/&gt;
+	&lt;key&gt;PayloadType&lt;/key&gt;
+	&lt;string&gt;Configuration&lt;/string&gt;
+	&lt;key&gt;PayloadUUID&lt;/key&gt;
+	&lt;string&gt;3FFF1FEC-04EB-4D2B-94AB-602EE3261D1D&lt;/string&gt;
+	&lt;key&gt;PayloadVersion&lt;/key&gt;
+	&lt;integer&gt;1&lt;/integer&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;
+
+</code></pre></div></div>
+
+<h2 id="google-doh"><a href="/static/dns/google-https.mobileconfig">Google DoH</a></h2>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+&lt;dict&gt;
+	&lt;key&gt;PayloadContent&lt;/key&gt;
+	&lt;array&gt;
+		&lt;dict&gt;
+			&lt;key&gt;DNSSettings&lt;/key&gt;
+			&lt;dict&gt;
+				&lt;key&gt;DNSProtocol&lt;/key&gt;
+				&lt;string&gt;HTTPS&lt;/string&gt;
+				&lt;key&gt;ServerAddresses&lt;/key&gt;
+				&lt;array&gt;
+					&lt;string&gt;2001:4860:4860::8888&lt;/string&gt;
+					&lt;string&gt;2001:4860:4860::8844&lt;/string&gt;
+					&lt;string&gt;8.8.8.8&lt;/string&gt;
+					&lt;string&gt;8.8.4.4&lt;/string&gt;
+				&lt;/array&gt;
+				&lt;key&gt;ServerURL&lt;/key&gt;
+				&lt;string&gt;https://dns.google/dns-query&lt;/string&gt;
+			&lt;/dict&gt;
+			&lt;key&gt;PayloadDescription&lt;/key&gt;
+			&lt;string&gt;Configures device to use Google Encrypted DNS over HTTPS&lt;/string&gt;
+			&lt;key&gt;PayloadDisplayName&lt;/key&gt;
+			&lt;string&gt;Google DNS over HTTPS&lt;/string&gt;
+			&lt;key&gt;PayloadIdentifier&lt;/key&gt;
+			&lt;string&gt;com.apple.dnsSettings.managed.f0ffd552-7183-4f2e-86e5-ee1ecad2a53a&lt;/string&gt;
+			&lt;key&gt;PayloadType&lt;/key&gt;
+			&lt;string&gt;com.apple.dnsSettings.managed&lt;/string&gt;
+			&lt;key&gt;PayloadUUID&lt;/key&gt;
+			&lt;string&gt;556aa9a6-04bb-4144-9a1b-e1b20cda3b47&lt;/string&gt;
+			&lt;key&gt;PayloadVersion&lt;/key&gt;
+			&lt;integer&gt;1&lt;/integer&gt;
+			&lt;key&gt;ProhibitDisablement&lt;/key&gt;
+			&lt;false/&gt;
+		&lt;/dict&gt;
+	&lt;/array&gt;
+	&lt;key&gt;PayloadDescription&lt;/key&gt;
+	&lt;string&gt;Adds the Google DNS to Big Sur and iOS 14 based systems&lt;/string&gt;
+	&lt;key&gt;PayloadDisplayName&lt;/key&gt;
+	&lt;string&gt;Google Encrypted DNS over HTTPS&lt;/string&gt;
+	&lt;key&gt;PayloadIdentifier&lt;/key&gt;
+	&lt;string&gt;com.paulmillr.apple-dns.google&lt;/string&gt;
+	&lt;key&gt;PayloadRemovalDisallowed&lt;/key&gt;
+	&lt;false/&gt;
+	&lt;key&gt;PayloadType&lt;/key&gt;
+	&lt;string&gt;Configuration&lt;/string&gt;
+	&lt;key&gt;PayloadUUID&lt;/key&gt;
+	&lt;string&gt;B27E8E10-697D-4938-8745-7FFEEEED57A0&lt;/string&gt;
+	&lt;key&gt;PayloadVersion&lt;/key&gt;
+	&lt;integer&gt;1&lt;/integer&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;
+</code></pre></div></div>
+
+<h2 id="google-dot"><a href="/static/dns/google-tls.mobileconfig">Google DoT</a></h2>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+&lt;dict&gt;
+	&lt;key&gt;PayloadContent&lt;/key&gt;
+	&lt;array&gt;
+		&lt;dict&gt;
+			&lt;key&gt;DNSSettings&lt;/key&gt;
+			&lt;dict&gt;
+				&lt;key&gt;DNSProtocol&lt;/key&gt;
+				&lt;string&gt;TLS&lt;/string&gt;
+				&lt;key&gt;ServerAddresses&lt;/key&gt;
+				&lt;array&gt;
+					&lt;string&gt;2001:4860:4860::8888&lt;/string&gt;
+					&lt;string&gt;2001:4860:4860::8844&lt;/string&gt;
+					&lt;string&gt;8.8.8.8&lt;/string&gt;
+					&lt;string&gt;8.8.4.4&lt;/string&gt;
+				&lt;/array&gt;
+				&lt;key&gt;ServerName&lt;/key&gt;
+				&lt;string&gt;dns.google&lt;/string&gt;
+			&lt;/dict&gt;
+			&lt;key&gt;PayloadDescription&lt;/key&gt;
+			&lt;string&gt;Configures device to use Google Encrypted DNS over TLS&lt;/string&gt;
+			&lt;key&gt;PayloadDisplayName&lt;/key&gt;
+			&lt;string&gt;Google DNS over TLS&lt;/string&gt;
+			&lt;key&gt;PayloadIdentifier&lt;/key&gt;
+			&lt;string&gt;com.apple.dnsSettings.managed.f0ffd552-7183-4f2e-86e5-ee1ecad2a53a&lt;/string&gt;
+			&lt;key&gt;PayloadType&lt;/key&gt;
+			&lt;string&gt;com.apple.dnsSettings.managed&lt;/string&gt;
+			&lt;key&gt;PayloadUUID&lt;/key&gt;
+			&lt;string&gt;556aa9a6-04bb-4144-9a1b-e1b20cda3b46&lt;/string&gt;
+			&lt;key&gt;PayloadVersion&lt;/key&gt;
+			&lt;integer&gt;1&lt;/integer&gt;
+			&lt;key&gt;ProhibitDisablement&lt;/key&gt;
+			&lt;false/&gt;
+		&lt;/dict&gt;
+	&lt;/array&gt;
+	&lt;key&gt;PayloadDescription&lt;/key&gt;
+	&lt;string&gt;Adds the Google DNS to Big Sur and iOS 14 based systems&lt;/string&gt;
+	&lt;key&gt;PayloadDisplayName&lt;/key&gt;
+	&lt;string&gt;Google Encrypted DNS over TLS&lt;/string&gt;
+	&lt;key&gt;PayloadIdentifier&lt;/key&gt;
+	&lt;string&gt;com.paulmillr.apple-dns.tlsgoogle&lt;/string&gt;
+	&lt;key&gt;PayloadRemovalDisallowed&lt;/key&gt;
+	&lt;false/&gt;
+	&lt;key&gt;PayloadType&lt;/key&gt;
+	&lt;string&gt;Configuration&lt;/string&gt;
+	&lt;key&gt;PayloadUUID&lt;/key&gt;
+	&lt;string&gt;34D8FE96-E803-4E50-A1E7-94367ABBEAB8&lt;/string&gt;
+	&lt;key&gt;PayloadVersion&lt;/key&gt;
+	&lt;integer&gt;1&lt;/integer&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;
+
+</code></pre></div></div>
+
+<h2 id="cloudflare-doh"><a href="/static/dns/cloudflare-https.mobileconfig">CloudFlare DoH</a></h2>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+&lt;dict&gt;
+	&lt;key&gt;PayloadContent&lt;/key&gt;
+	&lt;array&gt;
+		&lt;dict&gt;
+			&lt;key&gt;DNSSettings&lt;/key&gt;
+			&lt;dict&gt;
+				&lt;key&gt;DNSProtocol&lt;/key&gt;
+				&lt;string&gt;HTTPS&lt;/string&gt;
+				&lt;key&gt;ServerAddresses&lt;/key&gt;
+				&lt;array&gt;
+					&lt;string&gt;2606:4700:4700::1111&lt;/string&gt;
+					&lt;string&gt;2606:4700:4700::1001&lt;/string&gt;
+					&lt;string&gt;1.1.1.1&lt;/string&gt;
+					&lt;string&gt;1.0.0.1&lt;/string&gt;
+				&lt;/array&gt;
+				&lt;key&gt;ServerURL&lt;/key&gt;
+				&lt;string&gt;https://cloudflare-dns.com/dns-query&lt;/string&gt;
+			&lt;/dict&gt;
+			&lt;key&gt;PayloadDescription&lt;/key&gt;
+			&lt;string&gt;Configures device to use Cloudflare Encrypted DNS over HTTPS&lt;/string&gt;
+			&lt;key&gt;PayloadDisplayName&lt;/key&gt;
+			&lt;string&gt;Cloudflare DNS over HTTPS&lt;/string&gt;
+			&lt;key&gt;PayloadIdentifier&lt;/key&gt;
+			&lt;string&gt;com.apple.dnsSettings.managed.9d6e5fdf-e404-4f34-ae94-27ed2f636ac4&lt;/string&gt;
+			&lt;key&gt;PayloadType&lt;/key&gt;
+			&lt;string&gt;com.apple.dnsSettings.managed&lt;/string&gt;
+			&lt;key&gt;PayloadUUID&lt;/key&gt;
+			&lt;string&gt;35d5c8a0-afa6-4b36-a9fe-099a997b44ad&lt;/string&gt;
+			&lt;key&gt;PayloadVersion&lt;/key&gt;
+			&lt;integer&gt;1&lt;/integer&gt;
+			&lt;key&gt;ProhibitDisablement&lt;/key&gt;
+			&lt;false/&gt;
+		&lt;/dict&gt;
+	&lt;/array&gt;
+	&lt;key&gt;PayloadDescription&lt;/key&gt;
+	&lt;string&gt;Adds the Cloudflare DNS to Big Sur and iOS 14 based systems&lt;/string&gt;
+	&lt;key&gt;PayloadDisplayName&lt;/key&gt;
+	&lt;string&gt;Cloudflare DNS over HTTPS&lt;/string&gt;
+	&lt;key&gt;PayloadIdentifier&lt;/key&gt;
+	&lt;string&gt;com.paulmillr.apple-dns.cf&lt;/string&gt;
+	&lt;key&gt;PayloadRemovalDisallowed&lt;/key&gt;
+	&lt;false/&gt;
+	&lt;key&gt;PayloadType&lt;/key&gt;
+	&lt;string&gt;Configuration&lt;/string&gt;
+	&lt;key&gt;PayloadUUID&lt;/key&gt;
+	&lt;string&gt;A4475135-633A-4F15-A79B-BE15093DC97A&lt;/string&gt;
+	&lt;key&gt;PayloadVersion&lt;/key&gt;
+	&lt;integer&gt;1&lt;/integer&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;
+</code></pre></div></div>
+
+<h2 id="cloudflare-dot"><a href="/static/dns/cloudflare-tls.mobileconfig">CloudFlare DoT</a></h2>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+&lt;dict&gt;
+	&lt;key&gt;PayloadContent&lt;/key&gt;
+	&lt;array&gt;
+		&lt;dict&gt;
+			&lt;key&gt;DNSSettings&lt;/key&gt;
+			&lt;dict&gt;
+				&lt;key&gt;DNSProtocol&lt;/key&gt;
+				&lt;string&gt;TLS&lt;/string&gt;
+				&lt;key&gt;ServerAddresses&lt;/key&gt;
+				&lt;array&gt;
+					&lt;string&gt;2606:4700:4700::1111&lt;/string&gt;
+					&lt;string&gt;2606:4700:4700::1001&lt;/string&gt;
+					&lt;string&gt;1.1.1.1&lt;/string&gt;
+					&lt;string&gt;1.0.0.1&lt;/string&gt;
+				&lt;/array&gt;
+				&lt;key&gt;ServerName&lt;/key&gt;
+				&lt;string&gt;one.one.one.one&lt;/string&gt;
+			&lt;/dict&gt;
+			&lt;key&gt;PayloadDescription&lt;/key&gt;
+			&lt;string&gt;Configures device to use Cloudflare Encrypted DNS over TLS&lt;/string&gt;
+			&lt;key&gt;PayloadDisplayName&lt;/key&gt;
+			&lt;string&gt;Cloudflare DNS over TLS&lt;/string&gt;
+			&lt;key&gt;PayloadIdentifier&lt;/key&gt;
+			&lt;string&gt;com.apple.dnsSettings.managed.9d6e5fdf-e404-4f34-ae94-27ed2f636ac4&lt;/string&gt;
+			&lt;key&gt;PayloadType&lt;/key&gt;
+			&lt;string&gt;com.apple.dnsSettings.managed&lt;/string&gt;
+			&lt;key&gt;PayloadUUID&lt;/key&gt;
+			&lt;string&gt;35d5c8a0-afa6-4b36-a9fe-099a997b44ad&lt;/string&gt;
+			&lt;key&gt;PayloadVersion&lt;/key&gt;
+			&lt;integer&gt;1&lt;/integer&gt;
+			&lt;key&gt;ProhibitDisablement&lt;/key&gt;
+			&lt;false/&gt;
+		&lt;/dict&gt;
+	&lt;/array&gt;
+	&lt;key&gt;PayloadDescription&lt;/key&gt;
+	&lt;string&gt;Adds the Cloudflare DNS to Big Sur and iOS 14 based systems&lt;/string&gt;
+	&lt;key&gt;PayloadDisplayName&lt;/key&gt;
+	&lt;string&gt;Cloudflare DNS over TLS&lt;/string&gt;
+	&lt;key&gt;PayloadIdentifier&lt;/key&gt;
+	&lt;string&gt;com.paulmillr.apple-dns.tlscf&lt;/string&gt;
+	&lt;key&gt;PayloadRemovalDisallowed&lt;/key&gt;
+	&lt;false/&gt;
+	&lt;key&gt;PayloadType&lt;/key&gt;
+	&lt;string&gt;Configuration&lt;/string&gt;
+	&lt;key&gt;PayloadUUID&lt;/key&gt;
+	&lt;string&gt;32E01895-86AB-40AE-ACD2-4460D584EA35&lt;/string&gt;
+	&lt;key&gt;PayloadVersion&lt;/key&gt;
+	&lt;integer&gt;1&lt;/integer&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;
+
+</code></pre></div></div>
+
+<h1 id="补充几个国内访问不错的">补充几个国内访问不错的</h1>
+<p>https://101.101.101.101/dns-query <br />
+  https://223.5.5.5/dns-query <br />
+  https://apad.pro/dns-doh/</p>
+
+<script>
+  function rnd(len){
+    return (Math.random().toString(16).substring(2) + Math.random().toString(16).substring(2)).substring(0,len).toUpperCase()
+  }
+  function randUUID(){
+    return `${rnd(8)}-${rnd(4)}-${rnd(4)}-${rnd(4)}-${rnd(12)}`
+  }
+  function genDoHCfg(urlStr,ip){
+    let name = new URL(urlStr).host
+    let cfg = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>DNSSettings</key>
+			<dict>
+				<key>DNSProtocol</key>
+				<string>HTTPS</string>
+        ${ip ? `<key>ServerAddresses</key>
+				<array>
+					<string>${ip}</string>
+				</array>` : ""}
+				
+				<key>ServerURL</key>
+				<string>${urlStr}</string>
+			</dict>
+			<key>PayloadDescription</key>
+			<string>Configures device to use ${name} Encrypted DNS over HTTPS</string>
+			<key>PayloadDisplayName</key>
+			<string>${name} over HTTPS</string>
+			<key>PayloadIdentifier</key>
+			<string>com.apple.dnsSettings.managed.${randUUID()}</string>
+			<key>PayloadType</key>
+			<string>com.apple.dnsSettings.managed</string>
+			<key>PayloadUUID</key>
+			<string>${randUUID()}</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>ProhibitDisablement</key>
+			<false/>
+		</dict>
+	</array>
+	<key>PayloadDescription</key>
+	<string>Adds the ${name} to Big Sur and iOS 14 based systems</string>
+	<key>PayloadDisplayName</key>
+	<string>${name} over HTTPS</string>
+	<key>PayloadIdentifier</key>
+	<string>com.paulmillr.apple-dns.${name}</string>
+	<key>PayloadRemovalDisallowed</key>
+	<false/>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>${randUUID()}</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+</dict>
+</plist>
+`
+
+    const blob = new Blob([cfg ], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    
+// 使用 download 属性指定文件名
+    const downloadFileName = `DoHcfg-${name.replace(/\./g,'_')}.mobileconfig`;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = downloadFileName;
+    a.click();
+    URL.revokeObjectURL(url);
+
+  }
+</script>
+
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>关于密码备份</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>关于密码备份</h2><time datetime="2022-10-19 17:54:14 +0800">2022/10/19 Wed</time> &nbsp; &nbsp;<a href="/tags/流水账.html" class="tag"><text><nobr>#流水账</nobr></text>&nbsp;</a><a href="/tags/日常.html" class="tag"><text><nobr>#日常</nobr></text>&nbsp;</a><a href="/tags/工具.html" class="tag"><text><nobr>#工具</nobr></text>&nbsp;</a><a href="/tags/加密.html" class="tag"><text><nobr>#加密</nobr></text>&nbsp;</a><a href="/tags/笔记.html" class="tag"><text><nobr>#笔记</nobr></text>&nbsp;</a><article><p>前段时间，由于手机系统升级，重装两步验证app （微软Authenticator），印象中这个软件是会同步数据到icloud，
+大意了，就没备份，结果这软件竟然无法从iCloud备份恢复，一顿操作把备份弄没了 :(  M$这套同步逻辑是在弄不明白。</p>
+
+<p>然后就是所有的坏事情同时发生，bitwarden无法登录，注销账号后重新导入原来导出的 加密json，提示无法导入。</p>
+
+<p>万幸，一台电脑上有备份数据，断网，登入，导出明文json。</p>
+
+<p>经过此事，我决定以后定期导出明文的json，自己加密，通过邮箱自动备份。</p>
+
+<p>本来以前有一个mac的工具，自动备份，其他设备上无法运行，而且太重量级</p>
+
+<p>写了一个简陋的<a href="https://webecc.pages.dev/">网页版本</a>。</p>
+
+<p>第一次使用，生成专门的书签链接</p>
+<ol>
+  <li>输入备份json的密码</li>
+  <li>在 <strong>生成书签链接</strong> 区域，
+    <ol>
+      <li>输入邮箱。（多个可以使用英文逗号，分隔）</li>
+      <li>邮件标题 “密码备份”</li>
+      <li>输入密码前缀，（这里就用 bitwarden的邮箱，#结尾）</li>
+    </ol>
+  </li>
+  <li>点击 <code class="language-plaintext highlighter-rouge">生成书签链接(使用密码短语派生的公钥)</code> 这个链接</li>
+  <li>将生成的链接保存做书签。</li>
+</ol>
+
+<p>以后使用就直接打开书签链接</p>
+
+<ol>
+  <li>将导出的明文json放到 明文输入框中，</li>
+  <li>点击 <code class="language-plaintext highlighter-rouge">发送加密结果到邮件</code> 会生成加密内容，并打开一个邮件app，（我设置的outlook.com) 发送邮件。</li>
+</ol>
+
+<hr />
+<h1 id="下面是该网页的readme备份下">下面是该网页的README，备份下</h1>
+
+<hr />
+
+<h1 id="这是用来做什么的">这是用来做什么的？</h1>
+<p>定期导出密码管理器的密钥加密备份，发送到邮箱。</p>
+
+<blockquote>
+  <p>以前搞丢过bitwarden的两步验证，只能删掉账号。<br />
+定期导出管理器的密钥 
+将公钥放到链接里面，方便每次备份，不用每次输入短语</p>
+</blockquote>
+
+<h1 id="带入参数">带入参数</h1>
+
+<p>通过页面的一对密钥对 解密hash里面的data,解密成一个json</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>私钥 yNmVrcoS5D4xMTvjAPSkZe57HZqPZoIUxznm+SqWKFo=
+公钥 dTj41nmwoLcguLpM9AntyKgg67xx6K4UAxc27CLIcFw=
+</code></pre></div></div>
+<p>json结构</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+    prefix:string  
+    pubkey:string
+    toEmail:string
+}
+</code></pre></div></div>
+<p>|字段|说明|其他|
+|-|-|-|
+|prefix|密码短语的前缀(建议邮箱后面加上<code class="language-plaintext highlighter-rouge">#</code>)，和密码短语一起生成密钥对|可为空|
+|pubkey|传入的默认公钥，用来加密|
+|toEmail|生成mailto链接，发送加密的结果作为备份|
+|emailSubject|邮件主题|</p>
+
+<h2 id="通过hash-带入参数">通过hash 带入参数</h2>
+
+<p><a href="https://webecc.pages.dev/#&amp;data=BAAQACAAIAB3v4SZnpkL7YvNQK4Up1anEtK61zy7RWgCxTKz1jpp9oH8QLfqdbqAZRFcNnHvqYHnqfx91GT1hvch7LdnMM6c88W6QV5V56fpWLcXU5jXVWv%2BiZY4P3INk%2FJw6o5NtVJhYTHFK0UcXb7hLdx7GCaTIgWg0Zon3%2B9BIEaspj8c166yRsjD5TeZb5IWUjzPUGaxb1vQ3FCQH%2FRE6MLcf7S2hhMUT2yJzXaoqJIUMOnHtbcPmY4BpN6trjItVlE0rJkZsreBRybrcrMXyzdasklMLpk2LVcY5G4noZDRnY93nESSKkerOv%2Fs4nz82fvJjEzY%2F%2FRcAoy7JP%2BgOlvXSsUp">https://webecc.pages.dev/#&amp;data=BAAQACAAIAB3v4SZnpkL7YvNQK4Up1anEtK61zy7RWgCxTKz1jpp9oH8QLfqdbqAZRFcNnHvqYHnqfx91GT1hvch7LdnMM6c88W6QV5V56fpWLcXU5jXVWv%2BiZY4P3INk%2FJw6o5NtVJhYTHFK0UcXb7hLdx7GCaTIgWg0Zon3%2B9BIEaspj8c166yRsjD5TeZb5IWUjzPUGaxb1vQ3FCQH%2FRE6MLcf7S2hhMUT2yJzXaoqJIUMOnHtbcPmY4BpN6trjItVlE0rJkZsreBRybrcrMXyzdasklMLpk2LVcY5G4noZDRnY93nESSKkerOv%2Fs4nz82fvJjEzY%2F%2FRcAoy7JP%2BgOlvXSsUp</a></p>
+
+<h1 id="格式说明">格式说明</h1>
+
+<h2 id="结构">结构</h2>
+
+<table>
+  <tbody>
+    <tr>
+      <td>2字节</td>
+      <td>2字节</td>
+      <td>2字节</td>
+      <td>2字节</td>
+      <td>IV</td>
+      <td>MAC</td>
+      <td>随机公钥</td>
+      <td>加密数据</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><code class="language-plaintext highlighter-rouge">下面short都是小端模式</code></p>
+
+<ul>
+  <li>1-2字节short 意义
+    <ul>
+      <li>4：先gzip后加密</li>
+      <li>5：直接加密</li>
+    </ul>
+  </li>
+  <li>3-4字节的short值表示 iv的长度 ，16</li>
+  <li>5-6字节的short值表示 mac校验hash的长度 32</li>
+  <li>7-8字节 字节表示临时公钥长度 ，32</li>
+  <li>IV   // 随机生成</li>
+  <li>MAC  ，//最后计算生成</li>
+  <li>tmpPubKey //随机生成公钥私钥，私钥(tmpSecKey)使用后丢弃</li>
+  <li>EncryptData</li>
+</ul>
+
+<h2 id="过程">过程</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>生成临时公钥私钥 tmpSecKey , tmpPubKey
+
+sharedX（32 byte）= publickKey • tmpSecKey 
+
+buffer[96];
+copy sharedX  =&gt; buffer[0..31]
+
+/**
+* 下面公钥按照小端模式比较，先比较高位置，再比较低位
+*/
+if tmpPubKey &gt; publickKey  
+    copy publickKey =&gt; buffer[32...63]
+    copy tmpPubKey =&gt; buffer[64...95]   
+else  
+    copy publickKey =&gt; buffer[32...63]
+    copy tmpPubKey =&gt; buffer[64...95]    
+end  
+
+利用hash算法 blake2b 生成64字节长度digest
+digest = blake2b(buffer)
+
+其中 digest[0..31] 作为 AES-CBC 的密钥 aesKey,使用IV 一起加密密钥生成 加密数据 EncryptData
+
+其中 digest[32,63]作为计算mac的密钥 HKEY，输出32字节数据
+
+也是采用blake2b,指定输出32字节，key = HKEY
+
+mac = blake2b(IV + tmpPubKey + EncryptData)
+
+
+</code></pre></div></div>
+
+<h1 id="根据密码短语生成密钥">根据密码短语生成密钥</h1>
+
+<p>步骤</p>
+<ol>
+  <li>prefix(如果有) + 密码短语  作为  key  = prefix + phrase</li>
+  <li>PBKDF2(key) 生成32 字作为私钥, secKey = PBKDF2(key)</li>
+  <li>根据私钥生成 密钥对</li>
+</ol>
+
+<p>PBKDF2 参数</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>PBKDF2参数</th>
+      <th>value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>salt</td>
+      <td>The California sea lion (Zalophus californianus) is a coastal species of eared seal native to western North America. It is one of six species of sea lion. Its natural habitat ranges from southeast Alaska to central Mexico, including the Gulf of California. This female sea lion was photographed next to a western gull in Scripps Park in the neighborhood of La Jolla in San Diego, California. [2022-04-07 wikipedia]</td>
+    </tr>
+    <tr>
+      <td>iteration</td>
+      <td>123456</td>
+    </tr>
+    <tr>
+      <td>hash</td>
+      <td>SHA-256</td>
+    </tr>
+    <tr>
+      <td>outLen</td>
+      <td>256bit</td>
+    </tr>
+  </tbody>
+</table>
+
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

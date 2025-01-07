@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>每一次升级Mac OS 都是翻山越岭</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>每一次升级Mac OS 都是翻山越岭</h2><time datetime="2022-11-05 14:57:32 +0800">2022/11/05 Sat</time> &nbsp; &nbsp;<a href="/tags/流水账.html" class="tag"><text><nobr>#流水账</nobr></text>&nbsp;</a><a href="/tags/工具.html" class="tag"><text><nobr>#工具</nobr></text>&nbsp;</a><article><p>这两天升级了mac 系统，每一次升级都是情非得已。:(
+每次升级mac os 都是一堆事情。</p>
+<ol>
+  <li>vpn 无法使用（viscosity）换 tunnelblick</li>
+  <li>fab 无法使用</li>
+  <li>python2 无法使用
+后面可能还有惊喜
+碰巧发现一个bug，需要发布js文件到服务器。
+发现无法发布，fab坏了，（用的fab1.x 连带使用的是 python2）
+python无法使用时因为新版mac 删除了python2.7</li>
+</ol>
+
+<p>搜了下，2和3基本都是装一个老版本，然后手动改一些环境参数</p>
+<ol>
+  <li>
+    <p>下一个老版本的安装<br />
+<a href="https://www.python.org/ftp/python/2.7.18/python-2.7.18-macosx10.9.pkg">下载地址</a></p>
+  </li>
+  <li>
+    <p>运行fab时候还是会提示，/usr/bin/python 不存在
+尝试在/usr/bin下建立一个软连接，权限不允许，那就只能修改对应的fab 第一行。</p>
+  </li>
+</ol>
+
+<blockquote>
+  <p>#!/usr/local/bin/python</p>
+</blockquote>
+
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

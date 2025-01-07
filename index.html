@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><title>L 记事本</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <div>
+<div class="heatmap-title"></div>
+
+<div class='heatmap' id="heatmap-0">
+  
+</div>
+<script >
+  function create_heatmap(heatmapid,endYear){const WeeKStartStr = "1" ;//  0 sunday 1 monday 2. tuesday ...
+
+    const heatMapLoadCount = 14;
+    var _MonthStr =  'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec';
+    var _showWeek =  'Sun Mon Tue Wed Thu Fri Sat';
+    var _allyearurl =  '/assets/dyn/allyear.json';
+    ;!(function () {
+  
+  const WeeKStart = parseInt(WeeKStartStr)
+
+
+  var GDATA = window._G_DATA;
+  if (!GDATA) {
+    GDATA = {}
+    window._G_DATA = GDATA
+  }
+
+
+  function date2ymd(t) {
+    let m = t.getMonth() + 1;
+    let d = t.getDate();
+    return `${t.getFullYear()}-${m < 10 ? "0" + m : m}-${d < 10 ? "0" + d : d}`;
+  }
+
+  const todayYmd = date2ymd(new Date())
+  const strictMod =  endYear && endYear.length == 4;
+  const maxDateYmd = `${endYear}-12-31`
+  const dateEnd =
+    endYear && endYear.length == 4 ? new Date(maxDateYmd) : new Date();
+
+  const endStamp = dateEnd.getTime();
+  const dayEleId = Math.random().toString(16).substring(2);
+  let arr = _allyearurl.split("/");
+  arr.pop();
+  const jsonUrlBase = arr.join("/");
+
+  const nLastColumnCount = (dateEnd.getDay() -  WeeKStart + 7) % 7 + 1
+  const ColumnsCount = 53;
+  const RowCount = 7;
+  const DayCount = (ColumnsCount - 1) * RowCount + nLastColumnCount;
+
+  let queue  = window._y_queue || []
+  window._y_queue = queue;
+ 
+
+  function getAllYearCfg(){
+    
+    
+    if (GDATA['_allYear']) {
+      return GDATA['_allYear'];
+    }
+
+    if (window._isFetchAllYearData == 1) {
+      return new Promise(r=>{
+        queue.push(r);
+      })
+    }
+
+    
+    window._isFetchAllYearData = 1;
+    return fetch(_allyearurl)
+      .then((r) => r.json())
+      .then(d => { 
+        window._isFetchAllYearData = 0;
+        if (queue.length) {
+          queue.forEach(calback=>{calback(d)});
+          queue.length = 0;
+        }
+        GDATA['_allYear'] = d ;return d ;})
+  }
+  !(function fillData() {
+    let year = "" + dateEnd.getFullYear();
+    let preYear = "" + (year - 1);
+    getAllYearCfg()
+      .then((d) => {
+        let yearCfg = d;
+        let arr = [];
+        if (yearCfg[year]) {
+          arr.push(getYearData(year));
+        }
+
+        if (yearCfg[preYear]) {
+          arr.push(getYearData(preYear));
+        }
+        Promise.all(arr).then((alldata) => {
+          let combineData = {};
+          let d1 = alldata[0];
+          let d2 = alldata[1];
+
+          for (const key in d1) {
+            if (Object.prototype.hasOwnProperty.call(d1, key)) {
+              const element = d1[key];
+              let keyNew = "K1-" + key;
+              combineData[keyNew] = element;
+            }
+          }
+
+          for (const key in d2) {
+            if (Object.prototype.hasOwnProperty.call(d2, key)) {
+              const element = d2[key];
+              let keyNew = "K2-" + key;
+              combineData[keyNew] = element;
+            }
+          }
+
+          updateCell(combineData);
+        });
+      });
+
+    function getIndex(ymd) {
+      return (
+        DayCount -
+        Math.floor((endStamp - new Date(ymd).getTime()) / (24 * 3600000)) -
+        1
+      );
+    }
+
+    function idx2Ymd(idx) {
+      let t = new Date(endStamp - (DayCount - 1 - idx) * 3600000 * 24);
+      let m = t.getMonth() + 1;
+      let d = t.getDate();
+      return `${t.getFullYear()}-${m < 10 ? "0" + m : m}-${
+        d < 10 ? "0" + d : d
+      }`;
+    }
+
+    function updateCell(data) {
+      if (!data) return;
+
+
+      let daysEle = document.getElementById(dayEleId);
+      let dayCells = daysEle.childNodes;
+
+      let Map = {};
+
+      for (const key in data) {
+        if (Object.prototype.hasOwnProperty.call(data, key)) {
+          const element = data[key];
+          if (Array.isArray(element)) {
+            element.forEach((e) => {
+              if (e.date && e.title && e.url) {
+                let arr = Map[e.date];
+                if (!arr) {
+                  arr = [];
+                  Map[e.date] = arr;
+                }
+                arr.push(e);
+              }
+            });
+          }
+        }
+      }
+
+      let ymdArr = [];
+
+      for (const dateKeyYmd in Map) {
+        if (Object.prototype.hasOwnProperty.call(Map, dateKeyYmd)) {
+          ymdArr.push(dateKeyYmd);
+        }
+      }
+
+      var G_idxOfDay = DayCount - 1;
+
+      function shuffle(array) {
+        let currentIndex = array.length;
+
+        // While there remain elements to shuffle...
+        while (currentIndex != 0) {
+          // Pick a remaining element...
+          let randomIndex = Math.floor(Math.random() * currentIndex);
+          currentIndex--;
+
+          // And swap it with the current element.
+          [array[currentIndex], array[randomIndex]] = [
+            array[randomIndex],
+            array[currentIndex],
+          ];
+        }
+      }
+
+      const SEQ = new Array(DayCount);
+      let tmp = DayCount;
+      while (tmp-- > 0) {
+        SEQ[tmp] = tmp;
+      }
+
+      shuffle(SEQ);
+
+      const minYmd = `${endYear - 1}${maxDateYmd.substring(4)}`
+      function update1Day() {
+        if (G_idxOfDay < 0) {
+          return;
+        }
+        const idxOfDay = SEQ[G_idxOfDay--];
+        let dateKeyYmd = idx2Ymd(idxOfDay);
+        let arrPostInOneDay = Map[dateKeyYmd];
+
+        let hideblock = false
+        if (strictMod) {
+          hideblock = dateKeyYmd <= minYmd;
+        }
+
+        let isFuture = dateKeyYmd > todayYmd;
+
+        const dayCell = dayCells[idxOfDay];
+        if (hideblock) {
+          dayCell.classList = 'heatmap-day-cell hm-check-notyet'
+        }else if(isFuture){
+          dayCell.classList = parseInt(dateKeyYmd.substring(5, 7)) % 2 == 1 ? 'heatmap-day-cell hm-check-future-b' : 'heatmap-day-cell hm-check-future-a'
+        }
+        else{
+          
+          const nobg =
+          parseInt(dateKeyYmd.substring(5, 7)) % 2 == 1
+            ? "hm-check-no-b"
+            : "hm-check-no-a";
+        dayCell.classList = `heatmap-day-cell ${
+          !arrPostInOneDay
+            ? nobg
+            : arrPostInOneDay.length > 1
+            ? "hm-check2"
+            : "hm-check"
+        }`;
+
+        if (arrPostInOneDay && arrPostInOneDay.length > 0) {
+          let isDirectly = arrPostInOneDay.length == 1;
+          let tip = document.createElement("div");
+
+          if (isDirectly) {
+            let lnk = document.createElement("a");
+            lnk.href = arrPostInOneDay[0].url;
+            dayCell.appendChild(lnk);
+          }
+
+          tip.className = "hm-tip";
+          let desc = "";
+          arrPostInOneDay.forEach((element) => {
+            let lnk = document.createElement("a");
+            lnk.className = "hm-tiplink";
+            lnk.href = element.url;
+            tip.appendChild(lnk);
+
+            let t = document.createElement("span");
+            t.className = "hm-date";
+            t.innerText = dateKeyYmd.substring(5);
+            lnk.appendChild(t);
+
+            let t2 = document.createElement("span");
+            t2.className = "hm-title";
+            t2.innerText = element.title;
+            lnk.appendChild(t2);
+          });
+          dayCell.appendChild(tip);
+        }
+        }
+
+        
+      }
+
+      function updateMultiDays() {
+        let day = heatMapLoadCount;
+        if (!day || day <= 0) {
+          day = 8;
+        }
+        while (day--) {
+          update1Day();
+        }
+
+        if (G_idxOfDay >= 0) {
+          requestAnimationFrame(updateMultiDays);
+        }
+      }
+      requestAnimationFrame(updateMultiDays);
+
+      return;
+    }
+
+    function getYearData(year) {
+      year = '' + year
+
+    
+      if(GDATA[year]){
+
+        return GDATA[year]
+      }
+
+      let queueFlgKey = '_singleyearFlg' + year
+      let queueArrKey = '_singleyearQueue' + year
+      if (GDATA[queueFlgKey] == 1) {
+        // console.log('put in queue',year,Math.random())
+        let arrQueue = GDATA[queueArrKey]
+        if (!arrQueue) {
+          arrQueue = []
+          GDATA[queueArrKey] = arrQueue;
+        }
+        
+        return  new Promise(r=>{
+          arrQueue.push(r);
+        });
+      }
+
+
+      GDATA[queueFlgKey] = 1;
+      // console.log('RealQuery',year,Math.random())
+      return fetch(`${jsonUrlBase}/${year}.json`)
+        .then((r) => r.json())
+        .then(d=>{
+          GDATA[queueFlgKey] = 0 ;GDATA[year] = d; 
+          let queue = GDATA[queueArrKey];
+          // console.log('queryFinish',year)
+          if(queue && queue.length){
+            queue.forEach(cb=>{
+              // console.log('queryFinishQueue',year,queue.length,Math.random());
+              cb(d);})
+            queue.length = 0;
+            GDATA[queueArrKey] = undefined
+          }
+
+          return d})
+        .catch((e) => {
+          return null;
+        });
+    }
+  })();
+  (function initMap() {
+    let Father = document.getElementById(heatmapid);
+
+    const Frag = document.createDocumentFragment();
+
+    const monthEle = document.createElement("div");
+    monthEle.className = "heatmap-month";
+    Frag.appendChild(monthEle);
+    const monthStr = _MonthStr.split(" ");
+
+    let nowM = dateEnd.getMonth();
+    let nowWeekIdx = nLastColumnCount - 1;
+
+    for (let i = 0; i < monthStr.length; i++) {
+      let m = document.createElement("span");
+      m.className = "heatmap-month-cell";
+      m.innerHTML = `${monthStr[(i + nowM + 1) % 12]}`;
+      monthEle.appendChild(m);
+    }
+
+    const weekEle = document.createElement("div");
+    weekEle.className = "heatmap-week";
+    const WeekStr = _showWeek.split(" ");
+
+    for (let i = 0; i < WeekStr.length; i++) {
+      const idx = (i + WeeKStart) % 7
+      let m = document.createElement("div");
+      m.className = "heatmap-week-cell";
+      m.innerHTML = i % 2  ?  `<span>${WeekStr[idx]}</span>` : ''
+      weekEle.appendChild(m);
+    }
+
+    Frag.appendChild(weekEle);
+
+    const dayEle = document.createElement("div");
+
+    dayEle.className = "heatmap-day";
+    dayEle.id = dayEleId;
+
+    // console.log(nowWeekIdx, firstDateDayDiff);
+
+    for (let c = 0; c < ColumnsCount; c++) {
+      for (let r = 0; r < RowCount; r++) {
+        if (r > nowWeekIdx && c == ColumnsCount - 1) {
+          break;
+        }
+
+        let m = document.createElement("span");
+        m.classList = `heatmap-day-cell hm-check-nodata`;
+        dayEle.appendChild(m);
+      }
+    }
+
+    Frag.appendChild(dayEle);
+    Father.append(Frag);
+  })();
+})();
+
+  }
+</script>
+
+
+
+<script> 
+!function(){
+  var endYear = ""
+  var mapid = "heatmap-0"
+  create_heatmap(mapid,endYear )
+}()
+</script>
+
+</div><ul class="postlistul"><li class="postlistli">
+          <date>01/07</date><a href="/post/2025/01/2025-01-07-%E9%9B%85%E9%B2%81%E8%97%8F%E5%B8%83%E6%B1%9F%E4%B8%8B%E6%B8%B8%E6%B0%B4%E7%94%B5%E5%B7%A5%E7%A8%8B">雅鲁藏布江下游水电工程</a></li><li class="postlistli">
+          <date>01/03</date><div >
+                <a href="/post/2025/01/2025-01-03-%E6%AF%8F%E5%A4%A9%E4%B8%80%E9%9B%86%E6%B5%B7%E8%B4%BC%E7%8E%8B ">每天一集海贼王</a><text class="iconchar"> 🔑 </text></div></li><li class="postlistli">
+          <date>12/27</date><a href="/post/2024/12/2024-12-27-%E8%A5%BF%E9%87%8C%E8%A5%BF%E4%BA%9A%E7%BA%BA%E7%BB%87%E5%B7%A5%E4%BA%BA">西里西亚的纺织工人</a></li><li class="postlistli">
+          <date>12/27</date><a href="/post/2024/12/2024-12-27-%E7%BD%91%E9%A1%B5%E4%B8%8A%E7%9A%84%E7%94%B5%E8%84%91%E5%8D%9A%E7%89%A9%E9%A6%86">网页上的电脑博物馆</a></li><li class="postlistli">
+          <date>12/23</date><a href="/YesOrNo">Yes Or No?</a></li><li class="postlistli">
+          <date>12/23</date><a href="/post/2024/12/2024-12-23-%E7%AC%AC%E4%B8%80%E5%9C%BA%E9%9B%AA">第一场雪</a></li><li class="postlistli">
+          <date>12/20</date><a href="/post/2024/12/2024-12-20-%E4%BD%A0%E8%83%BD%E5%9C%A8%E6%B5%AA%E8%B4%B9%E6%97%B6%E9%97%B4%E4%B8%AD%E8%8E%B7%E5%BE%97%E4%B9%90%E8%B6%A3">你能在浪费时间中获得乐趣</a></li><li class="postlistli">
+          <date>12/20</date><a href="/post/2024/12/2024-12-20-%E8%A7%86%E9%A2%91%E5%88%B7%E5%BE%97%E6%9C%89%E7%82%B9%E8%BF%87%E7%81%AB%E4%BA%86">视频刷得似乎有点过火了</a></li><li class="postlistli">
+          <date>12/19</date><div >
+                <a href="/post/2024/12/2024-12-19-%E6%A2%A6 ">梦</a><text class="iconchar"> 🔑 </text></div></li><li class="postlistli">
+          <date>12/11</date><a href="/post/2024/12/2024-12-11-%E5%9C%A8wps%E4%B8%8A%E4%BD%BF%E7%94%A8%E5%AE%8F%E6%89%93%E5%8D%B0%E6%96%87%E4%BB%B6">在wps上使用宏打印文件</a></li><li class="postlistli">
+          <date>12/10</date><a href="/post/2024/12/2024-12-10-wps-mac-%E6%94%AF%E6%8C%81%E5%AE%8F%E4%BA%86">wps mac 支持宏了</a></li><li class="postlistli">
+          <date>12/10</date><a href="/post/2024/12/2024-12-10-%E6%94%92%E6%9C%BA">攒机</a></li><li class="postlistli">
+          <date>12/06</date><a href="/post/2024/12/2024-12-06-todo">逸剑风云决</a></li><li class="postlistli">
+          <date>12/05</date><div >
+                <a href="/post/2024/12/2024-12-05-xea ">夜半呓语</a><text class="iconchar"> 🔑 </text></div></li><li class="postlistli">
+          <date>12/03</date><a href="/post/2024/12/2024-12-03-a">霾</a></li><li class="postlistli">
+          <date>11/29</date><div >
+                <a href="/post/2024/11/2024-11-29-%E8%B6%B3%E7%90%83%E9%98%9F%E9%98%9F%E5%91%98%E4%BA%8C%E8%BD%AE%E9%80%89%E5%90%A7 ">足球队队员二轮选拔</a><text class="iconchar"> 🔑 </text></div></li><li class="postlistli">
+          <date>11/27</date><a href="/post/2024/11/2024-11-27-%E5%9B%BD%E8%A1%8Cswitch%E5%81%9C%E6%9C%8D">国行switch停服</a></li><li class="postlistli">
+          <date>11/25</date><a href="/post/2024/11/2024-11-25-%E8%B4%B1%E4%BA%BA%E5%9D%8F%E4%BA%8B%E6%98%AF%E4%B8%93%E4%B8%9A">贱人坏事，就是专业!</a></li><li class="postlistli">
+          <date>11/25</date><div >
+                <a href="/post/2024/11/2024-11-25-%E5%84%BF%E5%AD%90%E7%94%9F%E7%97%85 ">儿子生病</a><text class="iconchar"> 🔑 </text></div></li><li class="postlistli">
+          <date>11/24</date><a href="/post/2024/11/2024-11-24-heatmap">热力图</a></li><li class="postlistli">
+          <date>10/30</date><a href="/jsontool">JSONString自动格式化</a></li><li class="postlistli">
+          <date>10/23</date><a href="/post/2024/10/2024-10-23-ex">晴</a></li><li class="postlistli">
+          <date>10/17</date><div >
+                <a href="/post/2024/10/2024-10-17-%E6%97%A0%E4%BA%8B ">狗的事儿</a><text class="iconchar"> 🔑 </text></div></li><li class="postlistli">
+          <date>09/26</date><a href="/post/2024/09/2024-09-26-%E9%9A%90%E7%A7%81%E8%BD%AF%E4%BB%B6%E6%8E%A8%E8%8D%90">GoCryptFs和网盘</a></li><li class="postlistli">
+          <date>03/08</date><a href="/post/2024/03/2024-03-08-%E6%9E%81%E7%AE%80%E5%86%85%E5%AE%B9%E5%8F%91%E5%B8%83%E5%B9%B3%E5%8F%B0-telegra-ph">极简内容发布平台:telegra.ph</a></li><li class="postlistli">
+          <date>03/08</date><a href="/post/2024/03/2024-03-08-%E6%BC%AB%E7%94%BB%E5%A4%A7%E5%B8%88%E9%B8%9F%E5%B1%B1%E9%B8%A3%E5%85%88%E7%94%9F%E5%8E%BB%E4%B8%96">漫画大师鸟山明先生去世</a></li><li class="postlistli">
+          <date>01/14</date><a href="/post/2024/01/2024-01-14-%E9%82%A3%E4%BA%9B%E4%B8%80%E5%9D%97%E9%92%B1%E7%9A%84%E7%81%AB%E8%BD%A6%E7%A5%A8">那些一块钱的火车票</a></li><li class="postlistli">
+          <date>01/11</date><a href="/post/2024/01/2024-01-11-%E7%BA%AA%E5%BF%B5%E4%B8%80%E4%B8%AA%E8%80%81%E7%89%A9%E4%BB%B6">纪念一个老物件</a></li><li class="postlistli">
+          <date>12/13</date><a href="/post/2023/12/2023-12-13-%E6%B5%81%E6%84%9F">流感来袭</a></li><li class="postlistli">
+          <date>10/31</date><a href="/post/2023/10/2023-10-31-%E5%B8%88%E9%A3%8E%E6%95%A3%E8%AE%B0">师风散记</a></li><li class="postlistli">
+          <date>10/08</date><div >
+                <a href="/post/2023/10/2023-10-08-%E6%96%B0%E5%86%A0%E5%90%8E%E9%81%97%E7%97%87 ">新冠后遗症</a><text class="iconchar"> 🔑 </text></div></li><li class="postlistli">
+          <date>09/26</date><a href="/post/2023/09/2023-09-26-%E7%BF%BB%E5%A2%99%E6%89%93%E5%B7%A5%E8%A2%AB%E6%B2%A1%E6%94%B6%E4%B8%89%E5%B9%B4%E5%B7%A5%E8%B5%84%E6%94%B6%E5%85%A5">小伙翻墙打工被没收三年工资收入</a></li><li class="postlistli">
+          <date>09/06</date><div >
+                <a href="/post/2023/09/2023-09-06-%E5%8F%88%E9%98%B3%E4%BA%86 ">又阳了&二姐生日</a><text class="iconchar"> 🔑 </text></div></li><li class="postlistli">
+        <a href="/pages/2">查看更多...</a>
+      </li></ul>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>

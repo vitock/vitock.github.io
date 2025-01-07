@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" /><script type="text/x-mathjax-config">MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});</script>
+  <script type="text/javascript" async src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script><title>二进制扩展欧几里得算法(binary extended euclidean algorithm)</title><link rel="shortcut icon" type="image/x-icon" href="/logo.png" /><link rel="stylesheet" href="/assets/css/left.css" /></head><body a="light">
+    <main class="page-content" aria-label="Content"><header><div class="sidebar">
+
+<div class="sidecontent">
+<div class="avatar-title">
+  <a href="/"  ><img src="/assets/image/avatar.png"  class="avatar"/> </a>
+
+  <a href="/" class="nav-title"  > L 记事本 </a>
+</div>
+
+
+
+<nav>
+  <ul class="navul">
+      <li class="navli curNav">
+
+      <a href="/" class="nav">日志</a></li>
+      <li class="navli">
+
+      <a href="/archive.html" class="nav">归档</a></li>
+      <li class="navli">
+
+      <a href="/tags.html" class="nav">标签</a></li>
+      <li class="navli">
+
+      <a href="/about.html" class="nav">关于</a></li></ul>
+</nav>
+
+
+</div>
+
+
+</div></header>
+<section class="rightsidecontent">
+<div class="w">
+    
+    <h2>二进制扩展欧几里得算法(binary extended euclidean algorithm)</h2><time datetime="2022-05-05 03:54:21 +0800">2022/05/05 Thu</time> &nbsp; &nbsp;<a href="/tags/RSA.html" class="tag"><text><nobr>#RSA</nobr></text>&nbsp;</a><a href="/tags/ECC.html" class="tag"><text><nobr>#ECC</nobr></text>&nbsp;</a><a href="/tags/素数.html" class="tag"><text><nobr>#素数</nobr></text>&nbsp;</a><a href="/tags/模逆元.html" class="tag"><text><nobr>#模逆元</nobr></text>&nbsp;</a><article><p>最近实现了下椭圆曲线Secp251k1，频繁用到的一个算法是求模逆元，也就是 $ax  = 1 \mod p$
+这里,p是素数,我使用的前面所写的算法,把尾递归改成迭代。发现速度仍然比tomlib慢了10倍，内存也是大了很多，矩阵乘法局部变量太多，我猜测是这样。
+这里,看了他们源码,实现的是一个叫做 binary extended euclidean algorithm 的算法，
+在扩展欧几里得的基础上做了优化，不用每次做商求余，只需要每次右移。而移位操作的代价是很小的。</p>
+
+<p>前文中 <a href="/post/2021/08/2021-08-07-%E6%89%A9%E5%B1%95%E6%AC%A7%E5%87%A0%E9%87%8C%E5%BE%97%E7%AE%97%E6%B3%95">扩展欧几里得算法</a>中所描述的,最终是要找到  $ax + by = 1$的等式。</p>
+
+<p>二进制扩展欧几里得算法用到了下面几个事实 ,gcd 最大公约数</p>
+<ol>
+  <li>a b 都是偶数,那么  gcd(a,b) = 2 gcd(a/2,b/2),</li>
+  <li>a 是偶数,b是奇数,那么 gcd(a,b) = gcd(a/2,b)</li>
+  <li>a b 都是奇数,那么 gcd(a,b) = gcd((a-b)/2,b)</li>
+</ol>
+
+<p>根据这两个，我们可以不断的把
+\(\begin{bmatrix}
+a\\ 
+p
+\end{bmatrix}
+= A \begin{bmatrix}
+c\\ 
+x
+\end{bmatrix}\)
+这里,c 是最大公约数,本例中,p是素数,c = 1,而扩展欧几里得算法可以表示为一系列的线性变换。
+这里以，求 12，13 的过程为例,所有运算都是在素数域13下,mod 13,
+求2的逆元很简单,就是(13 + 1) / 2 = 7</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>a</th>
+      <th>p</th>
+      <th>步骤</th>
+      <th>状态         </th>
+      <th>备注</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>12</td>
+      <td>13</td>
+      <td>初始状态</td>
+      <td>| 1 ,0 | <br />| 0 ,1 |</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>13</td>
+      <td>a = a / 2</td>
+      <td>| 7 ,0 | <br />| 0 ,1 |</td>
+      <td>矩阵列第一列同时乘以2的逆元 ,这里是(13 + 1) / 2 = 7</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>13</td>
+      <td>a = a / 2</td>
+      <td>| 10 ,0|<br />| 0 ,1 |</td>
+      <td>矩阵列第一列同时乘以2的逆元7,  7 * 7 % 13 = 10</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>10</td>
+      <td>p =  p - a</td>
+      <td>| 10 ,4 | <br />| 0 ,1 |</td>
+      <td>第二列减去第一列,  0 - 10 % 13 = 3</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>5</td>
+      <td>p =  p - a</td>
+      <td>| 10 ,8 | <br />| 0 ,7 |</td>
+      <td>第2列除以2,  3 * 7 % 13 = 8</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>2</td>
+      <td>p =  p - a</td>
+      <td>| 10 ,11 | <br />| 0 ,7 |</td>
+      <td>第2列除以2,  (8 -10) % 13 = 11</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>3</td>
+      <td>交换 a p</td>
+      <td>| 11 ,10 | <br />| 7 ,0 |</td>
+      <td>交换 12 列</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>3</td>
+      <td>a = a/2</td>
+      <td>| 12 ,10 | <br />| 10 ,0 |</td>
+      <td>11 * 7 % 13 = 12</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>那么有</p>
+
+\[\begin{bmatrix}1\\3\end{bmatrix} 
+=  \begin{bmatrix}12&amp;10\\10&amp;0\end{bmatrix} \cdot
+\begin{bmatrix}
+12\\13
+\end{bmatrix} \mod 13\]
+
+<p>所以 12 模13 逆元是 12,也就是他本身。</p>
+
+<p>可以看到，矩阵$A$只有第一行起到了作用,实现过程中,我们可以忽略第二行，只需要两个变量就能表示中间状态。js 代码如下</p>
+
+<h2 id="避免使用乘法">避免使用乘法</h2>
+
+<p>经过测试之后,发现如果 所有a/2 都写成乘以2的逆元,那么会运用到大量乘法操作,即使采用分治法,速度也不令人满意。
+下面就运用一个技巧快速计算$a/2  \mod p$</p>
+<ul>
+  <li>如果a是偶数,那么直接取a的一半 $a/2$</li>
+  <li>如果a是奇数,$a = 2n + 1$ , 那么 $a/2 = (2n + 1) * i = 2 * i * n + i = n + i \mod p$
+这样,就不需要乘法操作,直接移位和加法就能快速的完成运算。
+    <blockquote>
+      <p>i 是 2 的逆元, i = (p+1)/2, 
+p 是奇数</p>
+    </blockquote>
+  </li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> 
+
+function binaryExGcd(a,b){
+
+
+    function div2(a,p,invers2){
+        /***
+         *   a/2 mod p ,
+         *   如果 a 是偶数,那么直接 a/2
+         *   如果 a 是奇数, 那么 a = 2n + 1
+         *   a/2  =  a * I  =  2 * I * n + I = n + I 
+         *   这里 I 是2 的逆元, I = (p + 1) / 2
+         */
+        if((a &amp; 1n) == 0){
+            return a&gt;&gt;1n;
+        }else{
+            const half = a &gt;&gt; 1n;
+            return half + invers2
+        }
+    }
+
+
+    if(a &gt;= b){
+        console.error("a must less than b")
+        return [0,0]
+    }
+    if((b &amp; 1n) == 0n){
+        console.error(b, "is not odd number")
+        return;
+    }
+
+    var invers2 = (b + 1n) &gt;&gt; 1n;
+    var A = a , B = b 
+    var u = 1n, v = 0n
+
+    var gcd = 1n;
+    while(true){
+        console.log(A,B,u,v)
+        if(A == 1n){
+            break;
+        }
+        if(B == 0n){
+            gcd *= A;
+            return [gcd,u];
+        }
+
+        if (A &gt; B){
+            var c = A 
+            A = B
+            B = c 
+            
+            c = u 
+            u = v 
+            v = c 
+
+            continue;
+        }
+
+        let isAOdd = (A &amp; 1n) == 1n
+        let isBOdd = (B &amp; 1n) == 1n
+
+        if(!isBOdd &amp;&amp; ! isAOdd ){
+            gcd &lt;&lt;= 1n;
+        }
+        
+        if (isAOdd &amp;&amp; isBOdd){
+            B =  (B - A) &gt;&gt; 1n;
+            v = (v - u) 
+            v = div2(v,b,invers2);
+            
+            if(v &lt; 0){
+                v += b
+            }
+            
+           
+            
+
+
+        }
+        else if(!isAOdd){
+            A &gt;&gt;= 1n;
+            u = div2(u,b,invers2);
+            if(u &lt; 0){
+                u += b
+            }
+
+        }
+        else if(!isBOdd){
+            B &gt;&gt;= 1n;
+            v = div2(v,b,invers2);
+
+            if(v &lt; 0){
+                v += b
+            }
+        }
+    }
+    u %= b 
+    if(u &lt; 0n){
+        u += b
+    }
+    return [gcd,u];
+}
+ 
+var count  = 1;
+while (count --)
+{
+    var a = BigInt(Math.ceil(Math.random() * 100000000))
+    var b =  BigInt(Math.ceil(Math.random() * 100000000000))
+    if( (b &amp; 1n) == 0){
+        b += 1n;
+    }
+
+    a = 311n 
+    b = 997n
+
+    var cc = binaryExGcd(a,b);
+    var gcd = cc[0]
+    var c = cc[1]
+    if(gcd){
+        console.log("result:",c ,gcd, (a * c )% b)
+    }
+    else{
+    }
+    
+    if(gcd &amp;&amp; (a * c )% b != gcd){
+        console.log("error:",a,b,c ,gcd, (a * c )% b)
+        break;
+    }
+}
+
+module.exports = binaryExGcd
+
+
+</code></pre></div></div>
+
+<h2 id="todo">TODO</h2>
+<p>上面只处理了，p是奇数的情况，无法处理偶数的情况，（偶数，2没有逆元）</p>
+</article>
+<footer class="footer">
+      <p> Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/vitock/jekyll-zeta">Jekyll-zeta</a>
+     </p>
+    </footer></div>
+</section></main></body>
+</html>
